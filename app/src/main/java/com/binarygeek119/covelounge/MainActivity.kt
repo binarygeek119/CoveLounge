@@ -88,7 +88,8 @@ class MainActivity : ComponentActivity() {
                         HomeScreen(homeVm, url ?: "", token ?: "",
                             onPlayVideo = { SoundManager.playClick(); selectedVideo = it },
                             onPlayAudio = { SoundManager.playClick(); selectedAudio = it },
-                            onViewImage = { SoundManager.playClick(); selectedImage = it })
+                            onViewImage = { SoundManager.playClick(); selectedImage = it },
+                            onOpenFolder = { })
                     }
                 }
             }
