@@ -1,6 +1,7 @@
 package com.binarygeek119.covelounge
 
 import android.os.Bundle
+import android.view.KeyEvent
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.collectAsState
@@ -10,11 +11,18 @@ import androidx.compose.runtime.mutableStateOf
 import kotlinx.coroutines.delay
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.res.painterResource
 import com.binarygeek119.covelounge.R
+import com.binarygeek119.covelounge.audio.SoundManager
 import com.binarygeek119.covelounge.data.ServerStore
 import com.binarygeek119.covelounge.quickpin.QuickPinScreen
 import com.binarygeek119.covelounge.quickpin.QuickPinViewModel
@@ -33,6 +41,7 @@ class MainActivity : ComponentActivity() {
         val loginVm = LoginViewModel(application)
         val homeVm = HomeViewModel(application)
         val quickPinVm = QuickPinViewModel(application)
+        SoundManager.init(application)
 
         setContent {
             CoveLoungeTheme {
@@ -45,7 +54,13 @@ class MainActivity : ComponentActivity() {
                 var selectedAudio by remember { mutableStateOf<Int?>(null) }
                 var selectedImage by remember { mutableStateOf<Int?>(null) }
                 var showSplash by remember { mutableStateOf(true) }
-                LaunchedEffect(Unit) { delay(1500); showSplash = false }
+                val infiniteTransition = rememberInfiniteTransition(label = "logo")
+                val scale by infiniteTransition.animateFloat(initialValue = 0.85f, targetValue = 1.15f, animationSpec = infiniteRepeatable(tween(700), RepeatMode.Reverse), label = "scale")
+                LaunchedEffect(Unit) {
+                    SoundManager.playStartup(application) { showSplash = false }
+                    delay(4000)
+                    showSplash = false
+                }
                 if (useQuickPin) LaunchedEffect(Unit) { quickPinVm.start() }
 
                 if (showSplash) {
@@ -53,7 +68,7 @@ class MainActivity : ComponentActivity() {
                         modifier = androidx.compose.ui.Modifier.fillMaxSize(),
                         contentAlignment = androidx.compose.ui.Alignment.Center
                     ) {
-                        Image(painter = painterResource(id = R.drawable.logo), contentDescription = "CoveLounge", modifier = androidx.compose.ui.Modifier.fillMaxSize(0.6f), contentScale = ContentScale.Fit)
+                        Image(painter = painterResource(id = R.drawable.logo), contentDescription = "CoveLounge", modifier = androidx.compose.ui.Modifier.fillMaxSize(0.6f).then(androidx.compose.ui.Modifier.scale(scale)), contentScale = ContentScale.Fit)
                     }
                 } else when {
                     token == null && !loggedIn && !quickSuccess -> {
@@ -63,18 +78,31 @@ class MainActivity : ComponentActivity() {
                             LoginScreen(loginVm, onLoggedIn = { }, onQuickPin = { useQuickPin = true })
                         }
                     }
-                    selectedVideo != null -> PlayerScreen(url!!, token ?: "", "video", selectedVideo!!) { selectedVideo = null }
-                    selectedAudio != null -> PlayerScreen(url!!, token ?: "", "audio", selectedAudio!!) { selectedAudio = null }
-                    selectedImage != null -> ImageScreen(url!!, token ?: "", selectedImage!!) { selectedImage = null }
+                    selectedVideo != null -> PlayerScreen(url!!, token ?: "", "video", selectedVideo!!) { SoundManager.playBack(); selectedVideo = null }
+                    selectedAudio != null -> PlayerScreen(url!!, token ?: "", "audio", selectedAudio!!) { SoundManager.playBack(); selectedAudio = null }
+                    selectedImage != null -> ImageScreen(url!!, token ?: "", selectedImage!!) { SoundManager.playBack(); selectedImage = null }
                     else -> {
                         homeVm.init(url, token)
                         HomeScreen(homeVm, url ?: "", token ?: "",
-                            onPlayVideo = { selectedVideo = it },
-                            onPlayAudio = { selectedAudio = it },
-                            onViewImage = { selectedImage = it })
+                            onPlayVideo = { SoundManager.playClick(); selectedVideo = it },
+                            onPlayAudio = { SoundManager.playClick(); selectedAudio = it },
+                            onViewImage = { SoundManager.playClick(); selectedImage = it })
                     }
                 }
             }
         }
+    }
+
+    override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        if (event.action == KeyEvent.ACTION_DOWN) {
+            when (event.keyCode) {
+                KeyEvent.KEYCODE_DPAD_UP,
+                KeyEvent.KEYCODE_DPAD_DOWN,
+                KeyEvent.KEYCODE_DPAD_LEFT,
+                KeyEvent.KEYCODE_DPAD_RIGHT -> SoundManager.playNav()
+                KeyEvent.KEYCODE_BACK -> SoundManager.playBack()
+            }
+        }
+        return super.dispatchKeyEvent(event)
     }
 }
