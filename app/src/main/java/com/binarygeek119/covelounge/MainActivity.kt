@@ -10,7 +10,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -62,6 +64,7 @@ class MainActivity : ComponentActivity() {
                 var selectedAudio by remember { mutableStateOf<Int?>(null) }
                 var selectedImage by remember { mutableStateOf<Int?>(null) }
                 var showSettings by remember { mutableStateOf(false) }
+                val scope = rememberCoroutineScope()
                 var showSearch by remember { mutableStateOf(false) }
                 var selectedFolder by remember { mutableStateOf<MediaKind?>(null) }
                 var showSplash by remember { mutableStateOf(true) }
@@ -118,7 +121,7 @@ class MainActivity : ComponentActivity() {
                             showSearch = false
                         }
                     }
-                    showSettings -> SettingsScreen { showSettings = false }
+                    showSettings -> SettingsScreen(onBack = { showSettings = false }, onLogout = { scope.launch { store.clear() } })
                     else -> {
                         BackHandler { SoundManager.playBack(); finish() }
                         homeVm.init(url, token)

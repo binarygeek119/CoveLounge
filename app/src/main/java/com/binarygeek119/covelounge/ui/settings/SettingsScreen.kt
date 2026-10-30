@@ -24,7 +24,7 @@ import com.binarygeek119.covelounge.data.SettingsStore
 import kotlinx.coroutines.launch
 
 @Composable
-fun SettingsScreen(onBack: () -> Unit) {
+fun SettingsScreen(onBack: () -> Unit, onLogout: () -> Unit = {}) {
     val context = LocalContext.current
     val store = remember { SettingsStore(context) }
     val scope = rememberCoroutineScope()
@@ -64,5 +64,6 @@ fun SettingsScreen(onBack: () -> Unit) {
             }) { Text("Save") }
             Button(onClick = onBack) { Text("Cancel") }
         }
+        Button(onClick = onLogout) { Text("Log out") }
     }
 }
