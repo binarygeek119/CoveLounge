@@ -12,6 +12,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -20,6 +21,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import com.binarygeek119.covelounge.data.ServerStore
+import com.binarygeek119.covelounge.data.SessionRepository
 import com.binarygeek119.covelounge.data.SettingsStore
 import kotlinx.coroutines.launch
 
@@ -27,6 +30,24 @@ import kotlinx.coroutines.launch
 fun SettingsScreen(onBack: () -> Unit, onLogout: () -> Unit = {}) {
     val context = LocalContext.current
     val store = remember { SettingsStore(context) }
+    val serverStore = remember { ServerStore(context) }
+    val session = remember { SessionRepository(serverStore) }
+    var accountName by remember { mutableStateOf<String?>(null) }
+    var permissions by remember { mutableStateOf<List<String>>(emptyList()) }
+    val url by serverStore.serverUrl.collectAsState(initial = null)
+    val token by serverStore.accessToken.collectAsState(initial = null)
+    LaunchedEffect(url, token) {
+        val u = url
+        val t = token
+        if (u != null && t != null) {
+            try {
+                val api = session.createApi(u, t)
+                val me = api.me()
+                accountName = me.user?.username
+                permissions = me.permissions
+            } catch (_: Exception) {}
+        }
+    }
     val scope = rememberCoroutineScope()
     val previewMode by store.previewMode.collectAsState(initial = "Off")
     val screenshotCount by store.screenshotCount.collectAsState(initial = 10)
@@ -39,6 +60,8 @@ fun SettingsScreen(onBack: () -> Unit, onLogout: () -> Unit = {}) {
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         Text("Settings")
+        accountName?.let { Text("Account: $it") }
+        if (permissions.isNotEmpty()) Text("Permissions: ${permissions.joinToString(", ")}")
         Text("Preview mode: $selectedMode")
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             listOf("Off", "Muted", "Low", "Full").forEach { mode ->
