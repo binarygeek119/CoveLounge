@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Text
+import androidx.compose.ui.graphics.Color
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -18,7 +19,7 @@ fun QuickPinScreen(viewModel: QuickPinViewModel, onConnected: () -> Unit) {
     if (success) onConnected()
 
     Column(Modifier.fillMaxSize(), Arrangement.Center, Alignment.CenterHorizontally) {
-        Text(status)
-        pin?.let { Text("PIN: $it") }
+        Text(status, color = Color.White)
+        pin?.let { Text("PIN: $it", color = Color.White) }
     }
 }
