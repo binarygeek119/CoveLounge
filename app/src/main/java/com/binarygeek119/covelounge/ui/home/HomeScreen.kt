@@ -20,9 +20,12 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -82,6 +85,13 @@ fun HomeScreen(
         Box(modifier = Modifier.fillMaxSize()) {
             // Scrollable media rows behind the spotlight bar
             val scrollState = rememberScrollState()
+            var focusedRow by remember { mutableStateOf(0) }
+            val scope = rememberCoroutineScope()
+            LaunchedEffect(focusedRow) {
+                scope.launch {
+                    scrollState.animateScrollTo(focusedRow * 160)
+                }
+            }
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -90,21 +100,27 @@ fun HomeScreen(
             ) {
                 MediaRow(
                     title = "Videos",
+                    rowIndex = 0,
                     items = recentVideos,
                     onFolderClick = { onOpenFolder(MediaKind.VIDEO) },
-                    onItemClick = { card -> onPlayVideo(card.id) }
+                    onItemClick = { card -> onPlayVideo(card.id) },
+                    onRowFocused = { focusedRow = it }
                 )
                 MediaRow(
                     title = "Audios",
+                    rowIndex = 1,
                     items = recentAudios,
                     onFolderClick = { onOpenFolder(MediaKind.AUDIO) },
-                    onItemClick = { card -> onPlayAudio(card.id) }
+                    onItemClick = { card -> onPlayAudio(card.id) },
+                    onRowFocused = { focusedRow = it }
                 )
                 MediaRow(
                     title = "Images",
+                    rowIndex = 2,
                     items = recentImages,
                     onFolderClick = { onOpenFolder(MediaKind.IMAGE) },
-                    onItemClick = { card -> onViewImage(card.id) }
+                    onItemClick = { card -> onViewImage(card.id) },
+                    onRowFocused = { focusedRow = it }
                 )
             }
 

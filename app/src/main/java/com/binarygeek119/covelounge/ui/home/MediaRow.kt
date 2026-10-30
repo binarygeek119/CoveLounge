@@ -44,9 +44,11 @@ import com.binarygeek119.covelounge.data.MediaCard
 @Composable
 fun MediaRow(
     title: String,
+    rowIndex: Int,
     items: List<MediaCard>,
     onFolderClick: () -> Unit,
     onItemClick: (MediaCard) -> Unit,
+    onRowFocused: (Int) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val total = items.size + 1 // folder + items
@@ -73,7 +75,7 @@ fun MediaRow(
                 val scale = if (isCurrent) 1.3f else 1f
                 Box(
                     modifier = Modifier
-                        .onFocusChanged { if (it.isFocused) focusedIndex = idx }
+                        .onFocusChanged { if (it.isFocused) { focusedIndex = idx; onRowFocused(rowIndex) } }
                         .focusable()
                         .clickable {
                             if (idx == 0) onFolderClick() else onItemClick(items[idx - 1])
