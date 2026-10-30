@@ -36,6 +36,8 @@ import com.binarygeek119.covelounge.data.ServerStore
 import com.binarygeek119.covelounge.util.UpdateChecker
 import com.binarygeek119.covelounge.quickpin.QuickPinScreen
 import com.binarygeek119.covelounge.quickpin.QuickPinViewModel
+import com.binarygeek119.covelounge.ui.detail.MediaDetailScreen
+import com.binarygeek119.covelounge.ui.detail.MediaDetailViewModel
 import com.binarygeek119.covelounge.ui.home.HomeScreen
 import com.binarygeek119.covelounge.ui.medialist.MediaListScreen
 import com.binarygeek119.covelounge.ui.medialist.MediaListViewModel
@@ -68,6 +70,8 @@ class MainActivity : ComponentActivity() {
                 var selectedVideo by remember { mutableStateOf<Int?>(null) }
                 var selectedAudio by remember { mutableStateOf<Int?>(null) }
                 var selectedImage by remember { mutableStateOf<Int?>(null) }
+                var detailKind by remember { mutableStateOf<MediaKind?>(null) }
+                var detailId by remember { mutableStateOf<Int?>(null) }
                 var showSettings by remember { mutableStateOf(false) }
                 val scope = rememberCoroutineScope()
                 var updateInfo by remember { mutableStateOf<UpdateChecker.ReleaseInfo?>(null) }
@@ -105,6 +109,22 @@ class MainActivity : ComponentActivity() {
                             LoginScreen(loginVm, onLoggedIn = { }, onQuickPin = { useQuickPin = true })
                         }
                     }
+                    detailKind != null && detailId != null -> {
+                        val kind = detailKind!!
+                        val id = detailId!!
+                        val vm = MediaDetailViewModel(application, kind, id)
+                        vm.init(url, token)
+                        MediaDetailScreen(vm, url ?: "", token ?: "", onBack = { detailKind = null; detailId = null }) {
+                            SoundManager.playClick()
+                            when (kind) {
+                                MediaKind.VIDEO -> selectedVideo = id
+                                MediaKind.AUDIO -> selectedAudio = id
+                                MediaKind.IMAGE -> selectedImage = id
+                            }
+                            detailKind = null
+                            detailId = null
+                        }
+                    }
                     selectedVideo != null -> PlayerScreen(url!!, token ?: "", "video", selectedVideo!!) { SoundManager.playBack(); selectedVideo = null }
                     selectedAudio != null -> PlayerScreen(url!!, token ?: "", "audio", selectedAudio!!) { SoundManager.playBack(); selectedAudio = null }
                     selectedImage != null -> ImageScreen(url!!, token ?: "", selectedImage!!) { SoundManager.playBack(); selectedImage = null }
@@ -114,9 +134,9 @@ class MainActivity : ComponentActivity() {
                         MediaListScreen(vm, url ?: "", token ?: "", onBack = { selectedFolder = null }) { card ->
                             SoundManager.playClick()
                             when (kind) {
-                                MediaKind.VIDEO -> selectedVideo = card.id
-                                MediaKind.AUDIO -> selectedAudio = card.id
-                                MediaKind.IMAGE -> selectedImage = card.id
+                                MediaKind.VIDEO -> { detailKind = MediaKind.VIDEO; detailId = card.id }
+                                MediaKind.AUDIO -> { detailKind = MediaKind.AUDIO; detailId = card.id }
+                                MediaKind.IMAGE -> { detailKind = MediaKind.IMAGE; detailId = card.id }
                             }
                             selectedFolder = null
                         }
@@ -127,9 +147,9 @@ class MainActivity : ComponentActivity() {
                         SearchScreen(vm, url ?: "", token ?: "", onBack = { showSearch = false }) { card ->
                             SoundManager.playClick()
                             when (card.kind) {
-                                MediaKind.VIDEO -> selectedVideo = card.id
-                                MediaKind.AUDIO -> selectedAudio = card.id
-                                MediaKind.IMAGE -> selectedImage = card.id
+                                MediaKind.VIDEO -> { detailKind = MediaKind.VIDEO; detailId = card.id }
+                                MediaKind.AUDIO -> { detailKind = MediaKind.AUDIO; detailId = card.id }
+                                MediaKind.IMAGE -> { detailKind = MediaKind.IMAGE; detailId = card.id }
                             }
                             showSearch = false
                         }
@@ -139,9 +159,7 @@ class MainActivity : ComponentActivity() {
                         BackHandler { SoundManager.playBack(); finish() }
                         homeVm.init(url, token)
                         HomeScreen(homeVm, url ?: "", token ?: "",
-                            onPlayVideo = { SoundManager.playClick(); selectedVideo = it },
-                            onPlayAudio = { SoundManager.playClick(); selectedAudio = it },
-                            onViewImage = { SoundManager.playClick(); selectedImage = it },
+                            onOpenItem = { kind, id -> SoundManager.playClick(); detailKind = kind; detailId = id },
                             onOpenFolder = { kind -> selectedFolder = kind },
                             onSettingsClick = { showSettings = true },
                             onSearchClick = { showSearch = true })

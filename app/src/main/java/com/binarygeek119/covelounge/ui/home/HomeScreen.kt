@@ -49,9 +49,7 @@ fun HomeScreen(
     viewModel: HomeViewModel,
     baseUrl: String,
     token: String,
-    onPlayVideo: (Int) -> Unit,
-    onPlayAudio: (Int) -> Unit,
-    onViewImage: (Int) -> Unit,
+    onOpenItem: (MediaKind, Int) -> Unit,
     onOpenFolder: (MediaKind) -> Unit,
     onSettingsClick: () -> Unit = {},
     onSearchClick: () -> Unit = {}
@@ -119,13 +117,7 @@ fun HomeScreen(
         } else {
             CoverFlow(
                 items = screenshots,
-                onOpen = { card ->
-                    when (card.kind) {
-                        MediaKind.VIDEO -> onPlayVideo(card.id)
-                        MediaKind.AUDIO -> onPlayAudio(card.id)
-                        MediaKind.IMAGE -> onViewImage(card.id)
-                    }
-                },
+                onOpen = { card -> onOpenItem(card.kind, card.id) },
                 previewMode = previewMode,
                 previewUrlProvider = { card ->
                     if (card.kind == MediaKind.VIDEO) "$baseUrl/api/stream/video/${card.id}/preview?access_token=$token" else null
@@ -138,7 +130,7 @@ fun HomeScreen(
                 title = "Continue Watching",
                 items = continueWatching,
                 onFolderClick = {},
-                onItemClick = { card -> onPlayVideo(card.id) }
+                onItemClick = { card -> onOpenItem(MediaKind.VIDEO, card.id) }
             )
         }
 
@@ -189,13 +181,7 @@ fun HomeScreen(
                             MediaKind.IMAGE -> onOpenFolder(MediaKind.IMAGE)
                         }
                     },
-                    onItemClick = { card ->
-                        when (kind) {
-                            MediaKind.VIDEO -> onPlayVideo(card.id)
-                            MediaKind.AUDIO -> onPlayAudio(card.id)
-                            MediaKind.IMAGE -> onViewImage(card.id)
-                        }
-                    }
+                    onItemClick = { card -> onOpenItem(kind, card.id) }
                 )
             }
             // Fixed selector overlay

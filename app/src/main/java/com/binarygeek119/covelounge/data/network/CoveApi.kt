@@ -40,6 +40,7 @@ data class PaginatedResponse<T>(
 data class VideoDto(
     val id: Int,
     val title: String? = null,
+    val details: String? = null,
     val imagePath: String? = null
 )
 
@@ -47,13 +48,15 @@ data class VideoDto(
 data class AudioDto(
     val id: Int,
     val title: String? = null,
+    val details: String? = null,
     val imagePath: String? = null
 )
 
 @Serializable
 data class ImageDto(
     val id: Int,
-    val title: String? = null
+    val title: String? = null,
+    val details: String? = null
 )
 
 interface CoveApi {
@@ -95,4 +98,13 @@ interface CoveApi {
         @Query("seed") seed: Int? = null,
         @Query("q") q: String? = null
     ): PaginatedResponse<ImageDto>
+
+    @GET("videos/{id}")
+    suspend fun videoDetail(@retrofit2.http.Path("id") id: Int): VideoDto
+
+    @GET("audios/{id}")
+    suspend fun audioDetail(@retrofit2.http.Path("id") id: Int): AudioDto
+
+    @GET("images/{id}")
+    suspend fun imageDetail(@retrofit2.http.Path("id") id: Int): ImageDto
 }
