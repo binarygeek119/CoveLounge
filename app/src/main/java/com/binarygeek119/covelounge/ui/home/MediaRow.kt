@@ -31,6 +31,7 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
@@ -54,7 +55,7 @@ fun MediaRow(
     val current = focusedIndex
 
     Column(modifier = modifier.fillMaxWidth().padding(vertical = 8.dp)) {
-        Text(title, modifier = Modifier.padding(start = 16.dp, bottom = 4.dp))
+        Text(title, color = Color.White, fontWeight = FontWeight.Bold, modifier = Modifier.padding(start = 16.dp, bottom = 6.dp))
         Box(modifier = Modifier.height(200.dp).fillMaxWidth()) {
             HorizontalPager(
                 state = pagerState,
