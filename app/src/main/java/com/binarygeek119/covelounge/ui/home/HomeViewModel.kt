@@ -21,6 +21,11 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
     private val _screenshots = MutableStateFlow<List<MediaCard>>(emptyList())
     val screenshots: StateFlow<List<MediaCard>> = _screenshots
 
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading
+    private val _error = MutableStateFlow<String?>(null)
+    val error: StateFlow<String?> = _error
+
     private val _recentVideos = MutableStateFlow<List<MediaCard>>(emptyList())
     val recentVideos: StateFlow<List<MediaCard>> = _recentVideos
     private val _recentAudios = MutableStateFlow<List<MediaCard>>(emptyList())
@@ -42,7 +47,9 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     private fun load() {
-        val a = api ?: return
+        val a = api ?: run { _isLoading.value = false; return }
+        _isLoading.value = true
+        _error.value = null
         viewModelScope.launch {
             try {
                 val count = settingsStore.screenshotCount.first().coerceIn(1, 30)
@@ -70,6 +77,7 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
                 }
             } catch (_: Exception) {}
         }
+        _isLoading.value = false
     }
 
     fun screenshotUrl(card: MediaCard): String = card.posterUrl

@@ -59,6 +59,8 @@ fun HomeScreen(
     val recentVideos by viewModel.recentVideos.collectAsState()
     val recentAudios by viewModel.recentAudios.collectAsState()
     val recentImages by viewModel.recentImages.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
+    val error by viewModel.error.collectAsState()
     val context = androidx.compose.ui.platform.LocalContext.current
     val settingsStore = remember { SettingsStore(context) }
     val previewMode by settingsStore.previewMode.collectAsState(initial = "Off")
@@ -91,6 +93,11 @@ fun HomeScreen(
                 )
             }
         }
+
+        if (isLoading) {
+            Text("Loading...", color = Color.Gray, modifier = Modifier.padding(16.dp))
+        }
+        error?.let { Text("Error: $it", color = Color.Red, modifier = Modifier.padding(16.dp)) }
 
         // Spotlight bar
         if (screenshots.isEmpty()) {
