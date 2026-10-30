@@ -59,7 +59,7 @@ fun MediaDetailScreen(
                         placeholder = ColorPainter(Color(0xFF2A2A3A)),
                         error = ColorPainter(Color(0xFF3A1A1A)),
                         modifier = Modifier.fillMaxWidth().height(120.dp).clip(RoundedCornerShape(8.dp)),
-                        contentScale = ContentScale.Fit
+                        contentScale = ContentScale.None
                     )
                 }
             }
