@@ -16,7 +16,7 @@ import androidx.media3.ui.PlayerView
 @Composable
 fun PlayerScreen(baseUrl: String, token: String, type: String, id: Int, onBack: () -> Unit) {
     val context = LocalContext.current
-    val url = if (type == "video") "$baseUrl/api/stream/video/$id?access_token=$token"
+    val url = if (type == "video") "$baseUrl/api/stream/video/$id/hls/master.m3u8?access_token=$token"
     else "$baseUrl/api/audios/$id/stream?access_token=$token"
 
     BackHandler { onBack() }
