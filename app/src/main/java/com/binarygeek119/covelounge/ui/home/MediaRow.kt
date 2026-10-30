@@ -133,8 +133,7 @@ private fun FolderCard(onClick: () -> Unit) {
     Box(
         modifier = Modifier
             .width(150.dp)
-            .height(100.dp)
-            .background(Color(0xFF1E3A8A), RoundedCornerShape(12.dp)),
+            .height(100.dp),
         contentAlignment = Alignment.Center
     ) {
         Image(
