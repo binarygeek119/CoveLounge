@@ -147,7 +147,6 @@ class MainActivity : ComponentActivity() {
                                 MediaKind.IMAGE -> { detailKind = MediaKind.IMAGE; detailId = card.id }
                                 MediaKind.GALLERY -> { detailKind = MediaKind.GALLERY; detailId = card.id }
                             }
-                            selectedFolder = null
                         }
                     }
                     showSearch -> {
