@@ -21,6 +21,7 @@ import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.Composable
@@ -143,7 +144,7 @@ fun CoverFlow(
                 )
         )
         // left arrow
-        Button(
+        IconButton(
             onClick = {
                 val prev = if (pagerState.currentPage > 0) pagerState.currentPage - 1 else items.size - 1
                 scope.launch { pagerState.animateScrollToPage(prev) }
@@ -152,10 +153,10 @@ fun CoverFlow(
                 .align(Alignment.CenterStart)
                 .padding(start = 8.dp)
                 .onFocusChanged { if (it.isFocused) focusedPosition = 0 }
-                .background(if (focusedPosition == 0) Color.White else Color.Transparent)
-        ) { Icon(Icons.Filled.KeyboardArrowLeft, contentDescription = "Previous", tint = Color(0xFF2196F3)) }
+                .background(if (focusedPosition == 0) Color.White else Color.Transparent, shape = RoundedCornerShape(8.dp))
+        ) { Icon(Icons.Filled.KeyboardArrowLeft, contentDescription = "Previous", tint = if (focusedPosition == 0) Color.Black else Color(0xFF2196F3)) }
         // right arrow
-        Button(
+        IconButton(
             onClick = {
                 val next = (pagerState.currentPage + 1) % items.size
                 scope.launch { pagerState.animateScrollToPage(next) }
@@ -164,8 +165,8 @@ fun CoverFlow(
                 .align(Alignment.CenterEnd)
                 .padding(end = 8.dp)
                 .onFocusChanged { if (it.isFocused) focusedPosition = 2 }
-                .background(if (focusedPosition == 2) Color.White else Color.Transparent)
-        ) { Icon(Icons.Filled.KeyboardArrowRight, contentDescription = "Next", tint = Color(0xFF2196F3)) }
+                .background(if (focusedPosition == 2) Color.White else Color.Transparent, shape = RoundedCornerShape(8.dp))
+        ) { Icon(Icons.Filled.KeyboardArrowRight, contentDescription = "Next", tint = if (focusedPosition == 2) Color.Black else Color(0xFF2196F3)) }
 
         // metadata overlay
         Column(
