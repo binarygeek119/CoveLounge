@@ -3,29 +3,29 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>ChannelFlow Pin Server</title>
+  <title>CoveLounge Pin Server</title>
   <link rel="icon" href="/favicon.ico" sizes="48x48" />
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
   <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
   <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
   <link rel="manifest" href="/site.webmanifest" />
   <meta name="theme-color" content="#0e0e12" />
-  <meta property="og:title" content="ChannelFlow Pin Server" />
+  <meta property="og:title" content="CoveLounge Pin Server" />
   <meta property="og:image" content="/logo.png" />
   <link rel="stylesheet" href="/style.css" />
 </head>
 <body>
   <header class="top">
     <div class="brand">
-      <img class="logo" src="/logo.png" alt="ChannelFlow Pin Server" width="471" height="284" />
+      <img class="logo" src="/logo.png" alt="CoveLounge Pin Server" width="471" height="284" />
     </div>
-    <p class="lede">Apps wait here for a quick PIN. Type that PIN on ChannelFlow-Server to send encrypted public and local M3U/XMLTV links. This page stands in for both sides until the client ships.</p>
+    <p class="lede">Apps wait here for a quick PIN. Type that PIN in Cove to send an encrypted server URL and API token. This page stands in for both sides during development.</p>
   </header>
 
   <main class="grid">
     <section class="card" id="app-pane">
       <h1>App</h1>
-      <p class="hint">Connects like the ChannelFlow client. Shows the PIN the user must type on the server.</p>
+      <p class="hint">Connects like the CoveLounge client. Shows the PIN the user must type on the server.</p>
       <div class="pin-board" id="app-pin" aria-live="polite">
         <span class="muted">Not connected</span>
       </div>
@@ -39,7 +39,7 @@
 
     <section class="card" id="server-pane">
       <h1>Quick Pin</h1>
-      <p class="hint">Same job as the ChannelFlow-Server tab: encrypt the public and local URL sets with the PIN and deliver them. Primary is the local pair when it differs from public (same-network pairing), otherwise the public pair.</p>
+      <p class="hint">Same job as the Cove tab: encrypt the public and local URL sets with the PIN and deliver them. Primary is the local pair when it differs from public (same-network pairing), otherwise the public pair.</p>
       <label>Quick PIN
         <input id="srv-pin" inputmode="text" autocomplete="off" spellcheck="false" maxlength="9" placeholder="XXXX-XXXX" />
       </label>

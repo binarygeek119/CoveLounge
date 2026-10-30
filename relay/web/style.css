@@ -3,8 +3,8 @@
   --card: #18181f;
   --ink: #f4f0ec;
   --muted: #9a948c;
-  --red: #e50914;
-  --red-dim: #9b0d14;
+  --accent: #7C4DFF;
+  --accent-dim: #5a35cc;
   --line: #2c2c34;
   --ok: #3dd68c;
   --warn: #f5c542;
@@ -17,7 +17,7 @@
 html, body { margin: 0; min-height: 100%; }
 body {
   font-family: var(--sans);
-  background: radial-gradient(1200px 500px at 10% -10%, #3a0a0d 0%, transparent 50%), var(--bg);
+  background: radial-gradient(1200px 500px at 10% -10%, #2a1a4d 0%, transparent 50%), var(--bg);
   color: var(--ink);
   line-height: 1.45;
 }
@@ -114,14 +114,14 @@ input {
   padding: 0.55rem 0.7rem;
 }
 input:focus {
-  outline: 2px solid var(--red-dim);
-  border-color: var(--red);
+  outline: 2px solid var(--accent-dim);
+  border-color: var(--accent);
 }
 .actions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
 button {
   font: inherit;
   font-weight: 600;
-  background: var(--red);
+  background: var(--accent);
   color: white;
   border: 0;
   border-radius: 8px;
