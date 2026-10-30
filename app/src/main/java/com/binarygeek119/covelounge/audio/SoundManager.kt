@@ -3,6 +3,7 @@ package com.binarygeek119.covelounge.audio
 import android.content.Context
 import android.media.MediaPlayer
 import android.media.SoundPool
+import android.util.Log
 import com.binarygeek119.covelounge.R
 
 object SoundManager {
@@ -32,13 +33,26 @@ object SoundManager {
 
     fun playStartup(context: Context, onCompletion: () -> Unit = {}) {
         stopStartup()
-        startupPlayer = MediaPlayer.create(context, R.raw.startup)?.apply {
+        val mp = MediaPlayer.create(context, R.raw.startup)
+        if (mp == null) {
+            Log.e("SoundManager", "MediaPlayer.create returned null for startup")
+            onCompletion()
+            return
+        }
+        startupPlayer = mp.apply {
             setOnCompletionListener {
+                Log.d("SoundManager", "startup completed")
                 onCompletion()
                 release()
                 startupPlayer = null
             }
+            setOnErrorListener { _, what, extra ->
+                Log.e("SoundManager", "startup error what=$what extra=$extra")
+                onCompletion()
+                true
+            }
             start()
+            Log.d("SoundManager", "startup started, duration=$duration")
         }
     }
 
