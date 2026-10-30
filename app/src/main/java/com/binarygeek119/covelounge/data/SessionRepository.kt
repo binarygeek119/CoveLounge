@@ -3,6 +3,8 @@ package com.binarygeek119.covelounge.data
 import android.content.Context
 import com.binarygeek119.covelounge.data.network.CoveApi
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.serialization.json.Json
@@ -24,18 +26,38 @@ class SessionRepository(private val store: ServerStore) {
     }
 
     fun createApi(baseUrl: String, token: String?): CoveApi {
-        val client = OkHttpClient.Builder().apply {
-            if (token != null) {
-                addInterceptor { chain ->
-                    val req = chain.request().newBuilder()
-                        .addHeader("Authorization", "Bearer $token")
-                        .build()
-                    chain.proceed(req)
-                }
-            }
-        }.build()
+        val cleanBase = baseUrl.trimEnd('/')
+        val authInterceptor = okhttp3.Interceptor { chain ->
+            val t = token
+            val req = if (t != null) chain.request().newBuilder().addHeader("Authorization", "Bearer $t").build() else chain.request()
+            chain.proceed(req)
+        }
+        val authenticator = okhttp3.Authenticator { _, response ->
+            val currentRefresh = runBlocking { store.refreshToken.first() }
+            if (currentRefresh.isNullOrBlank()) return@Authenticator null
+            val refreshClient = OkHttpClient()
+            val body = okhttp3.RequestBody.create("application/json".toMediaType(), "{\"refreshToken\":\"$currentRefresh\"}")
+            val refreshReq = okhttp3.Request.Builder()
+                .url("$cleanBase/api/auth/refresh")
+                .post(body)
+                .build()
+            val refreshRes = refreshClient.newCall(refreshReq).execute()
+            if (!refreshRes.isSuccessful) return@Authenticator null
+            val jsonStr = refreshRes.body?.string() ?: return@Authenticator null
+            val newToken = org.json.JSONObject(jsonStr).optString("token")
+            val newRefresh = org.json.JSONObject(jsonStr).optString("refreshToken")
+            if (newToken.isBlank()) return@Authenticator null
+            runBlocking { store.save(cleanBase, newToken, if (newRefresh.isBlank()) null else newRefresh) }
+            response.request.newBuilder()
+                .header("Authorization", "Bearer $newToken")
+                .build()
+        }
+        val client = OkHttpClient.Builder()
+            .addInterceptor(authInterceptor)
+            .authenticator(authenticator)
+            .build()
         return Retrofit.Builder()
-            .baseUrl(baseUrl.trimEnd('/') + "/")
+            .baseUrl("$cleanBase/")
             .client(client)
             .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
             .build()
