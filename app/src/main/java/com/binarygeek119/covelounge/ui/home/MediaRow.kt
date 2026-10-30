@@ -33,6 +33,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.painter.ColorPainter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -153,9 +154,11 @@ private fun ItemCard(item: MediaCard, onClick: () -> Unit) {
         AsyncImage(
             model = item.posterUrl,
             contentDescription = item.title,
+            placeholder = ColorPainter(Color(0xFF2A2A3A)),
+            error = ColorPainter(Color(0xFF3A1A1A)),
             modifier = Modifier
                 .width(150.dp)
-                .height(120.dp),
+                .height(100.dp),
             contentScale = ContentScale.Crop
         )
         Text(
