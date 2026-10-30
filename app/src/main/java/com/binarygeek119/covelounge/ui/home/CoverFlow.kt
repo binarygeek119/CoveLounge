@@ -14,7 +14,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Button
 import androidx.compose.material3.Text
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -36,6 +38,7 @@ import androidx.media3.ui.PlayerView
 import coil.compose.AsyncImage
 import com.binarygeek119.covelounge.data.MediaCard
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -55,6 +58,7 @@ fun CoverFlow(
         return
     }
     val pagerState = rememberPagerState(pageCount = { items.size })
+    val scope = rememberCoroutineScope()
     val context = LocalContext.current
     val player = remember { ExoPlayer.Builder(context).build() }
     DisposableEffect(Unit) { onDispose { player.release() } }
@@ -118,6 +122,23 @@ fun CoverFlow(
                     )
                 )
         )
+        // left arrow
+        Button(
+            onClick = {
+                val prev = if (pagerState.currentPage > 0) pagerState.currentPage - 1 else items.size - 1
+                scope.launch { pagerState.animateScrollToPage(prev) }
+            },
+            modifier = Modifier.align(Alignment.CenterStart).padding(start = 8.dp)
+        ) { Text("<") }
+        // right arrow
+        Button(
+            onClick = {
+                val next = (pagerState.currentPage + 1) % items.size
+                scope.launch { pagerState.animateScrollToPage(next) }
+            },
+            modifier = Modifier.align(Alignment.CenterEnd).padding(end = 8.dp)
+        ) { Text(">") }
+
         // dots
         Row(
             modifier = Modifier
