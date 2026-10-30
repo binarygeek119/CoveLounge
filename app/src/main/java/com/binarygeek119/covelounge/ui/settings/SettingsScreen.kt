@@ -26,7 +26,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.binarygeek119.covelounge.data.ServerStore
 import com.binarygeek119.covelounge.data.SessionRepository
+import com.binarygeek119.covelounge.BuildConfig
 import com.binarygeek119.covelounge.data.SettingsStore
+import com.binarygeek119.covelounge.util.UpdateChecker
 import kotlinx.coroutines.launch
 
 @Composable
@@ -38,6 +40,8 @@ fun SettingsScreen(onBack: () -> Unit, onLogout: () -> Unit = {}) {
     var accountName by remember { mutableStateOf<String?>(null) }
     var permissions by remember { mutableStateOf<List<String>>(emptyList()) }
     var showAbout by remember { mutableStateOf(false) }
+    var updateInfo by remember { mutableStateOf<UpdateChecker.ReleaseInfo?>(null) }
+    var checkingUpdate by remember { mutableStateOf(false) }
     val url by serverStore.serverUrl.collectAsState(initial = null)
     val token by serverStore.accessToken.collectAsState(initial = null)
     val previewMode by store.previewMode.collectAsState(initial = "Off")
@@ -110,6 +114,18 @@ fun SettingsScreen(onBack: () -> Unit, onLogout: () -> Unit = {}) {
                 Text("About")
                 Text("CoveLounge Android TV client")
                 Button(onClick = { showAbout = true }) { Text("Version info") }
+                Button(onClick = {
+                    checkingUpdate = true
+                    scope.launch {
+                        val info = UpdateChecker.checkLatest()
+                        checkingUpdate = false
+                        if (info != null && UpdateChecker.isNewer(BuildConfig.VERSION_NAME, info.tag)) {
+                            updateInfo = info
+                        } else {
+                            showAbout = true
+                        }
+                    }
+                }) { Text(if (checkingUpdate) "Checking..." else "Check for updates") }
                 Button(onClick = { category = "main" }) { Text("Back") }
             }
         }
@@ -119,8 +135,30 @@ fun SettingsScreen(onBack: () -> Unit, onLogout: () -> Unit = {}) {
         AlertDialog(
             onDismissRequest = { showAbout = false },
             title = { Text("About CoveLounge") },
-            text = { Text("Android TV client for Cove.\nVersion 0.2.x") },
+            text = { Text("Android TV client for Cove.\nVersion ${BuildConfig.VERSION_NAME}") },
             confirmButton = { TextButton(onClick = { showAbout = false }) { Text("OK") } }
+        )
+    }
+
+    updateInfo?.let { info ->
+        AlertDialog(
+            onDismissRequest = { updateInfo = null },
+            title = { Text("Update available") },
+            text = { Text("Version ${info.tag} is available. Download and install?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    if (info.apkUrl != null) {
+                        scope.launch {
+                            val file = UpdateChecker.downloadApk(context, info.apkUrl)
+                            if (file != null) UpdateChecker.installApk(context, file)
+                            updateInfo = null
+                        }
+                    }
+                }) { Text("Download") }
+            },
+            dismissButton = {
+                TextButton(onClick = { updateInfo = null }) { Text("Later") }
+            }
         )
     }
 }
