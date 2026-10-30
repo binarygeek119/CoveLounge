@@ -82,7 +82,6 @@ fun MediaRow(
                         .clickable {
                             if (idx == 0) onFolderClick() else onItemClick(items[idx - 1])
                         }
-                        .then(if (isCurrent) Modifier.border(3.dp, Color.White, RoundedCornerShape(12.dp)) else Modifier)
                 ) {
                     if (idx == 0) {
                         FolderCard(onClick = {})
@@ -92,7 +91,14 @@ fun MediaRow(
                     }
                 }
             }
-            // No fixed selector; highlight is on the item itself
+            // Fixed selector overlay
+            Box(
+                modifier = Modifier
+                    .align(Alignment.CenterStart)
+                    .padding(start = 16.dp)
+                    .size(150.dp, 100.dp)
+                    .border(4.dp, Color.White, RoundedCornerShape(12.dp))
+            )
         }
         // dots
         Row(
