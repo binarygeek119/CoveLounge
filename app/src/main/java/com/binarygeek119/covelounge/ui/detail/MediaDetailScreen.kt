@@ -18,6 +18,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import com.binarygeek119.covelounge.data.MediaKind
 
 @Composable
 fun MediaDetailScreen(
@@ -36,6 +37,10 @@ fun MediaDetailScreen(
         Text("Back", color = Color.White, modifier = Modifier.clickable { onBack() }.padding(bottom = 8.dp))
         posterUrl?.let {
             AsyncImage(model = it, contentDescription = title, modifier = Modifier.fillMaxWidth().height(240.dp), contentScale = ContentScale.Crop)
+        }
+        if (viewModel.kind == MediaKind.VIDEO) {
+            Text("Sprite sheet:", color = Color.White, modifier = Modifier.padding(top = 8.dp))
+            AsyncImage(model = "$baseUrl/api/stream/video/${viewModel.id}/sprite?access_token=$token", contentDescription = "Sprite", modifier = Modifier.fillMaxWidth().height(120.dp), contentScale = ContentScale.Crop)
         }
         Text(title ?: "Untitled", color = Color.White, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 8.dp))
         details?.let { Text(it, color = Color.Gray, modifier = Modifier.padding(top = 8.dp)) }
