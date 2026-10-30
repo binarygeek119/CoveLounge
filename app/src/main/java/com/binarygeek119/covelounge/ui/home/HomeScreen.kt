@@ -33,6 +33,8 @@ import androidx.compose.runtime.setValue
 import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -138,6 +140,7 @@ fun HomeScreen(
             add(Triple("Images", recentImages, MediaKind.IMAGE))
             add(Triple("Galleries", recentGalleries, MediaKind.GALLERY))
         }
+        val focusRequesters = remember { List(rows.size) { FocusRequester() } }
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -147,13 +150,21 @@ fun HomeScreen(
                         when (event.nativeKeyEvent.keyCode) {
                             android.view.KeyEvent.KEYCODE_DPAD_UP -> {
                                 if (verticalPagerState.currentPage > 0) {
-                                    scope.launch { verticalPagerState.animateScrollToPage(verticalPagerState.currentPage - 1) }
+                                    val target = verticalPagerState.currentPage - 1
+                                    scope.launch {
+                                        verticalPagerState.animateScrollToPage(target)
+                                        focusRequesters.getOrElse(target) { FocusRequester() }.requestFocus()
+                                    }
                                 }
                                 true
                             }
                             android.view.KeyEvent.KEYCODE_DPAD_DOWN -> {
                                 if (verticalPagerState.currentPage < rows.size - 1) {
-                                    scope.launch { verticalPagerState.animateScrollToPage(verticalPagerState.currentPage + 1) }
+                                    val target = verticalPagerState.currentPage + 1
+                                    scope.launch {
+                                        verticalPagerState.animateScrollToPage(target)
+                                        focusRequesters.getOrElse(target) { FocusRequester() }.requestFocus()
+                                    }
                                 }
                                 true
                             }
@@ -167,19 +178,21 @@ fun HomeScreen(
                 modifier = Modifier.fillMaxSize()
             ) { page ->
                 val (title, items, kind) = rows[page]
-                MediaRow(
-                    title = title,
-                    items = items,
-                    onFolderClick = {
-                        when (kind) {
-                            MediaKind.VIDEO -> onOpenFolder(MediaKind.VIDEO)
-                            MediaKind.AUDIO -> onOpenFolder(MediaKind.AUDIO)
-                            MediaKind.IMAGE -> onOpenFolder(MediaKind.IMAGE)
-                            MediaKind.GALLERY -> onOpenFolder(MediaKind.GALLERY)
-                        }
-                    },
-                    onItemClick = { card -> onOpenItem(kind, card.id) }
-                )
+                Box(modifier = Modifier.focusRequester(focusRequesters.getOrElse(page) { FocusRequester() })) {
+                    MediaRow(
+                        title = title,
+                        items = items,
+                        onFolderClick = {
+                            when (kind) {
+                                MediaKind.VIDEO -> onOpenFolder(MediaKind.VIDEO)
+                                MediaKind.AUDIO -> onOpenFolder(MediaKind.AUDIO)
+                                MediaKind.IMAGE -> onOpenFolder(MediaKind.IMAGE)
+                                MediaKind.GALLERY -> onOpenFolder(MediaKind.GALLERY)
+                            }
+                        },
+                        onItemClick = { card -> onOpenItem(kind, card.id) }
+                    )
+                }
             }
             // Fixed selector overlay
             Box(
