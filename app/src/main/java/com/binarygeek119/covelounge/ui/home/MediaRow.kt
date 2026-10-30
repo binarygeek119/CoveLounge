@@ -32,6 +32,7 @@ import androidx.compose.foundation.focusable
 import androidx.compose.foundation.Image
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.ColorPainter
@@ -161,7 +162,8 @@ private fun ItemCard(item: MediaCard, onClick: () -> Unit) {
             error = ColorPainter(Color(0xFF3A1A1A)),
             modifier = Modifier
                 .width(150.dp)
-                .height(100.dp),
+                .height(100.dp)
+                .clip(RoundedCornerShape(8.dp)),
             contentScale = ContentScale.Crop
         )
         Text(

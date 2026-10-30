@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.KeyboardArrowRight
@@ -33,6 +34,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
@@ -119,6 +121,7 @@ fun CoverFlow(
                     contentDescription = item.title,
                     modifier = Modifier
                         .fillMaxSize()
+                        .clip(RoundedCornerShape(12.dp))
                         .alpha(if (focusedPosition == 1) 1f else 0f)
                         .onFocusChanged { if (it.isFocused) { focusedPosition = 1; onFocus() } }
                         .clickable { if (page == pagerState.currentPage) onOpen(item) },

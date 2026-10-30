@@ -14,7 +14,9 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
@@ -36,7 +38,7 @@ fun MediaDetailScreen(
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
         Text("Back", color = Color.White, modifier = Modifier.clickable { onBack() }.padding(bottom = 8.dp))
         posterUrl?.let {
-            AsyncImage(model = it, contentDescription = title, modifier = Modifier.fillMaxWidth().height(240.dp), contentScale = ContentScale.Crop)
+            AsyncImage(model = it, contentDescription = title, modifier = Modifier.fillMaxWidth().height(240.dp).clip(RoundedCornerShape(8.dp)), contentScale = ContentScale.Crop)
         }
         if (viewModel.kind == MediaKind.VIDEO) {
             Text("Sprite sheet:", color = Color.White, modifier = Modifier.padding(top = 8.dp))
