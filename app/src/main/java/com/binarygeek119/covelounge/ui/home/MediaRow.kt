@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PageSize
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -53,6 +54,7 @@ fun MediaRow(
     val pagerState = rememberPagerState(pageCount = { if (total <= 0) 1 else Int.MAX_VALUE })
     var focusedIndex by remember { mutableStateOf(0) }
     val current = focusedIndex
+    val screenWidthDp = LocalConfiguration.current.screenWidthDp
 
     Column(modifier = modifier.fillMaxWidth().padding(vertical = 8.dp)) {
         Text(title, color = Color.White, fontWeight = FontWeight.Bold, modifier = Modifier.padding(start = 16.dp, bottom = 6.dp))
@@ -60,7 +62,7 @@ fun MediaRow(
             HorizontalPager(
                 state = pagerState,
                 pageSize = PageSize.Fixed(150.dp),
-                contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 16.dp),
+                contentPadding = androidx.compose.foundation.layout.PaddingValues(start = 16.dp, end = (screenWidthDp - 16 - 150).dp),
                 pageSpacing = 8.dp,
                 modifier = Modifier.fillMaxSize()
             ) { page ->
@@ -83,8 +85,9 @@ fun MediaRow(
             // Fixed selector overlay
             Box(
                 modifier = Modifier
-                    .align(Alignment.Center)
-                    .size(200.dp, 180.dp)
+                    .align(Alignment.CenterStart)
+                    .padding(start = 16.dp)
+                    .size(150.dp, 180.dp)
                     .border(4.dp, Color.White, RoundedCornerShape(12.dp))
             )
         }
@@ -116,7 +119,7 @@ private fun FolderCard(onClick: () -> Unit) {
     Box(
         modifier = Modifier
             .width(150.dp)
-            .height(150.dp)
+            .height(180.dp)
             .background(Color(0xFF1E1E2E), RoundedCornerShape(12.dp))
             .clickable { onClick() },
         contentAlignment = Alignment.Center
@@ -130,7 +133,10 @@ private fun ItemCard(item: MediaCard, onClick: () -> Unit) {
     Column(
         modifier = Modifier
             .width(150.dp)
-            .clickable { onClick() }
+            .height(180.dp)
+            .clickable { onClick() },
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
         AsyncImage(
             model = item.posterUrl,
