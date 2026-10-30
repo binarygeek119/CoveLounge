@@ -53,7 +53,8 @@ fun HomeScreen(
     onPlayAudio: (Int) -> Unit,
     onViewImage: (Int) -> Unit,
     onOpenFolder: (MediaKind) -> Unit,
-    onSettingsClick: () -> Unit = {}
+    onSettingsClick: () -> Unit = {},
+    onSearchClick: () -> Unit = {}
 ) {
     val screenshots by viewModel.screenshots.collectAsState()
     val recentVideos by viewModel.recentVideos.collectAsState()
@@ -86,11 +87,18 @@ fun HomeScreen(
                     modifier = Modifier.height(40.dp),
                     contentScale = ContentScale.Fit
                 )
-                Text(
-                    text = "Settings",
-                    color = Color.White,
-                    modifier = Modifier.clickable { onSettingsClick() }
-                )
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text(
+                        text = "Search",
+                        color = Color.White,
+                        modifier = Modifier.clickable { onSearchClick() }
+                    )
+                    Text(
+                        text = "Settings",
+                        color = Color.White,
+                        modifier = Modifier.clickable { onSettingsClick() }
+                    )
+                }
             }
         }
 

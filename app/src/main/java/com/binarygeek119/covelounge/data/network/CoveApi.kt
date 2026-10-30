@@ -72,7 +72,8 @@ interface CoveApi {
         @Query("perPage") perPage: Int = 25,
         @Query("sort") sort: String? = null,
         @Query("direction") direction: String? = null,
-        @Query("seed") seed: Int? = null
+        @Query("seed") seed: Int? = null,
+        @Query("q") q: String? = null
     ): PaginatedResponse<VideoDto>
 
     @GET("audios")
@@ -81,7 +82,8 @@ interface CoveApi {
         @Query("perPage") perPage: Int = 25,
         @Query("sort") sort: String? = null,
         @Query("direction") direction: String? = null,
-        @Query("seed") seed: Int? = null
+        @Query("seed") seed: Int? = null,
+        @Query("q") q: String? = null
     ): PaginatedResponse<AudioDto>
 
     @GET("images")
@@ -90,6 +92,7 @@ interface CoveApi {
         @Query("perPage") perPage: Int = 25,
         @Query("sort") sort: String? = null,
         @Query("direction") direction: String? = null,
-        @Query("seed") seed: Int? = null
+        @Query("seed") seed: Int? = null,
+        @Query("q") q: String? = null
     ): PaginatedResponse<ImageDto>
 }

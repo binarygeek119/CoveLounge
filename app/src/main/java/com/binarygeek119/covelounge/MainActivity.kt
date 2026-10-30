@@ -38,6 +38,8 @@ import com.binarygeek119.covelounge.ui.login.LoginViewModel
 import com.binarygeek119.covelounge.ui.media.ImageScreen
 import com.binarygeek119.covelounge.ui.media.PlayerScreen
 import com.binarygeek119.covelounge.ui.settings.SettingsScreen
+import com.binarygeek119.covelounge.ui.search.SearchScreen
+import com.binarygeek119.covelounge.ui.search.SearchViewModel
 import com.binarygeek119.covelounge.ui.theme.CoveLoungeTheme
 
 class MainActivity : ComponentActivity() {
@@ -60,6 +62,7 @@ class MainActivity : ComponentActivity() {
                 var selectedAudio by remember { mutableStateOf<Int?>(null) }
                 var selectedImage by remember { mutableStateOf<Int?>(null) }
                 var showSettings by remember { mutableStateOf(false) }
+                var showSearch by remember { mutableStateOf(false) }
                 var selectedFolder by remember { mutableStateOf<MediaKind?>(null) }
                 var showSplash by remember { mutableStateOf(true) }
                 val infiniteTransition = rememberInfiniteTransition(label = "logo")
@@ -102,6 +105,19 @@ class MainActivity : ComponentActivity() {
                             selectedFolder = null
                         }
                     }
+                    showSearch -> {
+                        val vm = SearchViewModel(application)
+                        vm.init(url, token)
+                        SearchScreen(vm, url ?: "", token ?: "", onBack = { showSearch = false }) { card ->
+                            SoundManager.playClick()
+                            when (card.kind) {
+                                MediaKind.VIDEO -> selectedVideo = card.id
+                                MediaKind.AUDIO -> selectedAudio = card.id
+                                MediaKind.IMAGE -> selectedImage = card.id
+                            }
+                            showSearch = false
+                        }
+                    }
                     showSettings -> SettingsScreen { showSettings = false }
                     else -> {
                         BackHandler { SoundManager.playBack(); finish() }
@@ -111,7 +127,8 @@ class MainActivity : ComponentActivity() {
                             onPlayAudio = { SoundManager.playClick(); selectedAudio = it },
                             onViewImage = { SoundManager.playClick(); selectedImage = it },
                             onOpenFolder = { kind -> selectedFolder = kind },
-                            onSettingsClick = { showSettings = true })
+                            onSettingsClick = { showSettings = true },
+                            onSearchClick = { showSearch = true })
                     }
                 }
             }
