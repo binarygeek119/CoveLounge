@@ -57,7 +57,7 @@ class SessionRepository(private val store: ServerStore) {
             .authenticator(authenticator)
             .build()
         return Retrofit.Builder()
-            .baseUrl("$cleanBase/")
+            .baseUrl("$cleanBase/api/")
             .client(client)
             .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
             .build()
