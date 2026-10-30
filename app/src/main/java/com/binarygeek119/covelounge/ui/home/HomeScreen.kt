@@ -128,24 +128,16 @@ fun HomeScreen(
             )
         }
 
-        if (continueWatching.isNotEmpty()) {
-            MediaRow(
-                title = "Continue Watching",
-                items = continueWatching,
-                onFolderClick = {},
-                onItemClick = { card -> onOpenItem(MediaKind.VIDEO, card.id) }
-            )
-        }
-
         // Vertical selector area
-        val verticalPagerState = rememberPagerState(pageCount = { 4 })
+        val verticalPagerState = rememberPagerState(pageCount = { if (continueWatching.isNotEmpty()) 5 else 4 })
         val scope = rememberCoroutineScope()
-        val rows = listOf(
-            Triple("Videos", recentVideos, MediaKind.VIDEO),
-            Triple("Audios", recentAudios, MediaKind.AUDIO),
-            Triple("Images", recentImages, MediaKind.IMAGE),
-            Triple("Galleries", recentGalleries, MediaKind.GALLERY)
-        )
+        val rows = buildList {
+            if (continueWatching.isNotEmpty()) add(Triple("Continue Watching", continueWatching, MediaKind.VIDEO))
+            add(Triple("Videos", recentVideos, MediaKind.VIDEO))
+            add(Triple("Audios", recentAudios, MediaKind.AUDIO))
+            add(Triple("Images", recentImages, MediaKind.IMAGE))
+            add(Triple("Galleries", recentGalleries, MediaKind.GALLERY))
+        }
         Box(
             modifier = Modifier
                 .fillMaxWidth()
