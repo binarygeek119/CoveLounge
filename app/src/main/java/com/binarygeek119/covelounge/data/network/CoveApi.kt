@@ -102,9 +102,24 @@ interface CoveApi {
     @GET("videos/{id}")
     suspend fun videoDetail(@retrofit2.http.Path("id") id: Int): VideoDto
 
+    @POST("videos/{id}/play")
+    suspend fun recordVideoPlay(@retrofit2.http.Path("id") id: Int): retrofit2.Response<Unit>
+
+    @POST("videos/{id}/like")
+    suspend fun likeVideo(@retrofit2.http.Path("id") id: Int): Int
+
     @GET("audios/{id}")
     suspend fun audioDetail(@retrofit2.http.Path("id") id: Int): AudioDto
 
+    @POST("audios/{id}/play")
+    suspend fun recordAudioPlay(@retrofit2.http.Path("id") id: Int): retrofit2.Response<Unit>
+
+    @POST("audios/{id}/like")
+    suspend fun likeAudio(@retrofit2.http.Path("id") id: Int): Int
+
     @GET("images/{id}")
     suspend fun imageDetail(@retrofit2.http.Path("id") id: Int): ImageDto
+
+    @POST("images/{id}/like")
+    suspend fun likeImage(@retrofit2.http.Path("id") id: Int): Int
 }

@@ -21,9 +21,39 @@ class MediaDetailViewModel(app: Application, val kind: MediaKind, val id: Int) :
     private val _posterUrl = MutableStateFlow<String?>(null)
     val posterUrl: StateFlow<String?> = _posterUrl
 
+    private val _likeCount = MutableStateFlow(0)
+    val likeCount: StateFlow<Int> = _likeCount
+
     private var api: com.binarygeek119.covelounge.data.network.CoveApi? = null
     private var baseUrl: String = ""
     private var token: String = ""
+
+    fun like() {
+        val a = api ?: return
+        viewModelScope.launch {
+            try {
+                val count = when (kind) {
+                    MediaKind.VIDEO -> a.likeVideo(id)
+                    MediaKind.AUDIO -> a.likeAudio(id)
+                    MediaKind.IMAGE -> a.likeImage(id)
+                }
+                _likeCount.value = count
+            } catch (_: Exception) {}
+        }
+    }
+
+    fun recordPlay() {
+        val a = api ?: return
+        viewModelScope.launch {
+            try {
+                when (kind) {
+                    MediaKind.VIDEO -> a.recordVideoPlay(id)
+                    MediaKind.AUDIO -> a.recordAudioPlay(id)
+                    MediaKind.IMAGE -> {}
+                }
+            } catch (_: Exception) {}
+        }
+    }
 
     fun init(serverUrl: String?, authToken: String?) {
         if (serverUrl == null || authToken == null) return

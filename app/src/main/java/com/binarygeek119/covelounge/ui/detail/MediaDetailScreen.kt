@@ -30,6 +30,7 @@ fun MediaDetailScreen(
     val title by viewModel.title.collectAsState()
     val details by viewModel.details.collectAsState()
     val posterUrl by viewModel.posterUrl.collectAsState()
+    val likeCount by viewModel.likeCount.collectAsState()
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
         Text("Back", color = Color.White, modifier = Modifier.clickable { onBack() }.padding(bottom = 8.dp))
         posterUrl?.let {
@@ -37,6 +38,7 @@ fun MediaDetailScreen(
         }
         Text(title ?: "Untitled", color = Color.White, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 8.dp))
         details?.let { Text(it, color = Color.Gray, modifier = Modifier.padding(top = 8.dp)) }
-        Button(onClick = onPlay, modifier = Modifier.padding(top = 16.dp)) { Text("Play") }
+        Button(onClick = { viewModel.recordPlay(); onPlay() }, modifier = Modifier.padding(top = 16.dp)) { Text("Play") }
+        Button(onClick = { viewModel.like() }, modifier = Modifier.padding(top = 8.dp)) { Text("Like (${likeCount})") }
     }
 }
