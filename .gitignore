@@ -1,0 +1,21 @@
+# Android
+*.iml
+.gradle/
+.idea/
+build/
+captures/
+.externalNativeBuild/
+.cxx/
+local.properties
+
+# Gradle
+.gradle
+
+# OS
+.DS_Store
+
+# Relay build artifacts
+relay/pinserver
+
+# Heap dumps
+*.hprof
