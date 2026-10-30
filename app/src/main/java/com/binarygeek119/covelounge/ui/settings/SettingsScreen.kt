@@ -48,15 +48,21 @@ fun SettingsScreen(onBack: () -> Unit, onLogout: () -> Unit = {}) {
     val previewMode by store.previewMode.collectAsState(initial = "Off")
     val screenshotCount by store.screenshotCount.collectAsState(initial = 10)
     val screenshotInterval by store.screenshotInterval.collectAsState(initial = 10)
+    val useTranscode by store.useTranscode.collectAsState(initial = false)
+    val transcodeResolution by store.transcodeResolution.collectAsState(initial = "720p")
     var selectedMode by remember { mutableStateOf(previewMode) }
     var selectedCount by remember { mutableStateOf(screenshotCount) }
     var selectedInterval by remember { mutableStateOf(screenshotInterval) }
+    var selectedUseTranscode by remember { mutableStateOf(useTranscode) }
+    var selectedResolution by remember { mutableStateOf(transcodeResolution) }
     val scope = rememberCoroutineScope()
 
-    LaunchedEffect(previewMode, screenshotCount, screenshotInterval) {
+    LaunchedEffect(previewMode, screenshotCount, screenshotInterval, useTranscode, transcodeResolution) {
         selectedMode = previewMode
         selectedCount = screenshotCount
         selectedInterval = screenshotInterval
+        selectedUseTranscode = useTranscode
+        selectedResolution = transcodeResolution
     }
     LaunchedEffect(url, token) {
         val u = url
@@ -104,11 +110,21 @@ fun SettingsScreen(onBack: () -> Unit, onLogout: () -> Unit = {}) {
                 Slider(value = selectedCount.toFloat(), onValueChange = { selectedCount = it.toInt() }, valueRange = 1f..30f, modifier = Modifier.fillMaxWidth())
                 Text("Screenshot interval (sec): $selectedInterval")
                 Slider(value = selectedInterval.toFloat(), onValueChange = { selectedInterval = it.toInt() }, valueRange = 10f..120f, modifier = Modifier.fillMaxWidth())
+                Text("Use transcoding: $selectedUseTranscode")
+                Button(onClick = { selectedUseTranscode = !selectedUseTranscode }) { Text(if (selectedUseTranscode) "On" else "Off") }
+                Text("Transcode resolution: $selectedResolution")
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    listOf("480p", "720p", "1080p").forEach { res ->
+                        Button(onClick = { selectedResolution = res }) { Text(res) }
+                    }
+                }
                 Button(onClick = {
                     scope.launch {
                         store.setPreviewMode(selectedMode)
                         store.setScreenshotCount(selectedCount)
                         store.setScreenshotInterval(selectedInterval)
+                        store.setUseTranscode(selectedUseTranscode)
+                        store.setTranscodeResolution(selectedResolution)
                     }
                     category = "main"
                 }) { Text("Save") }
