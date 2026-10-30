@@ -9,7 +9,7 @@ import javax.crypto.spec.SecretKeySpec
 object QuickPinCrypto {
     fun decrypt(pin: String, ciphertextB64: String): String {
         val normalized = pin.uppercase().replace(Regex("[^A-Z0-9]"), "")
-        val keyBytes = MessageDigest.getInstance("SHA-256").digest(("Cove QuickPin v1" + normalized).toByteArray(Charsets.US_ASCII))
+        val keyBytes = MessageDigest.getInstance("SHA-256").digest(("ChannelFlow QuickPin v1" + normalized).toByteArray(Charsets.US_ASCII))
         val blob = Base64.decode(ciphertextB64, Base64.DEFAULT)
         val nonce = blob.copyOfRange(0, 12)
         val ctAndTag = blob.copyOfRange(12, blob.size)

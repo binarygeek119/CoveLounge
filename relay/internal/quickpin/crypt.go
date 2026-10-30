@@ -19,7 +19,7 @@ const (
 	seedPrefix = "ChannelFlow QuickPin v1"
 	nonceSize  = 12
 	pinLen     = 8
-	alphabet   = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+	alphabet   = "ACDEFGHJKLMNOPQRSTUVWXYZ0123456789"
 )
 
 var (
@@ -133,7 +133,7 @@ func DecryptLinks(pin, ciphertext string) (Links, error) {
 	return links, nil
 }
 
-// RandomPin returns an 8-character pin from A–Z and 0–9.
+// RandomPin returns an 8-character pin from an unambiguous subset of A–Z and 0–9 (no B or I).
 func RandomPin() (string, error) {
 	const n = len(alphabet)
 	out := make([]byte, pinLen)
@@ -142,7 +142,7 @@ func RandomPin() (string, error) {
 		if _, err := rand.Read(b[:]); err != nil {
 			return "", err
 		}
-		// alphabet is 36 chars; reject the 4 leftover values in 0–255
+		// alphabet is 34 chars; reject leftover values in 0–255
 		if int(b[0]) >= n*(256/n) {
 			continue
 		}
