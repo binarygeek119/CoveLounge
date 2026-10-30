@@ -60,6 +60,12 @@ class MainActivity : ComponentActivity() {
         val quickPinVm = QuickPinViewModel(application)
         SoundManager.init(application)
 
+        onBackPressedDispatcher.addCallback(this, object : androidx.activity.OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                SoundManager.playBack()
+            }
+        })
+
         setContent {
             CoveLoungeTheme {
                 val token by store.accessToken.collectAsState(initial = null)
