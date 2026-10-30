@@ -3,6 +3,7 @@ package com.binarygeek119.covelounge
 import android.os.Bundle
 import android.view.KeyEvent
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.LaunchedEffect
@@ -82,6 +83,7 @@ class MainActivity : ComponentActivity() {
                     selectedAudio != null -> PlayerScreen(url!!, token ?: "", "audio", selectedAudio!!) { SoundManager.playBack(); selectedAudio = null }
                     selectedImage != null -> ImageScreen(url!!, token ?: "", selectedImage!!) { SoundManager.playBack(); selectedImage = null }
                     else -> {
+                        BackHandler { SoundManager.playBack(); finish() }
                         homeVm.init(url, token)
                         HomeScreen(homeVm, url ?: "", token ?: "",
                             onPlayVideo = { SoundManager.playClick(); selectedVideo = it },
@@ -100,7 +102,6 @@ class MainActivity : ComponentActivity() {
                 KeyEvent.KEYCODE_DPAD_DOWN,
                 KeyEvent.KEYCODE_DPAD_LEFT,
                 KeyEvent.KEYCODE_DPAD_RIGHT -> SoundManager.playNav()
-                KeyEvent.KEYCODE_BACK -> SoundManager.playBack()
             }
         }
         return super.dispatchKeyEvent(event)
