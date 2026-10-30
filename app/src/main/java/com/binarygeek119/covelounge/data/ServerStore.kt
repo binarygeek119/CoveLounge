@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.map
 
 private val Context.dataStore by preferencesDataStore(name = "covelounge")
 
-class ServerStore(private val context: Context) {
+class ServerStore(val context: Context) {
     private val KEY_URL = stringPreferencesKey("server_url")
     private val KEY_TOKEN = stringPreferencesKey("access_token")
     private val KEY_REFRESH = stringPreferencesKey("refresh_token")
