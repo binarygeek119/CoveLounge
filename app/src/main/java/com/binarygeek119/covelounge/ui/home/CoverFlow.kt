@@ -19,6 +19,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import android.view.KeyEvent
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -48,7 +50,9 @@ fun CoverFlow(
             pagerState.animateScrollToPage(next)
         }
     }
-    Box(modifier = modifier.height(260.dp).fillMaxWidth()) {
+    Box(modifier = modifier.height(260.dp).fillMaxWidth().onPreviewKeyEvent { event ->
+        if (event.nativeKeyEvent.action == KeyEvent.ACTION_DOWN && event.nativeKeyEvent.keyCode == KeyEvent.KEYCODE_DPAD_UP) true else false
+    }) {
         HorizontalPager(state = pagerState, modifier = Modifier.fillMaxSize()) { page ->
             val item = items[page]
             AsyncImage(
