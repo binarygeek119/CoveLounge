@@ -60,11 +60,12 @@ class MainActivity : ComponentActivity() {
         val quickPinVm = QuickPinViewModel(application)
         SoundManager.init(application)
 
-        onBackPressedDispatcher.addCallback(this, object : androidx.activity.OnBackPressedCallback(true) {
+        val backCallback = object : androidx.activity.OnBackPressedCallback(false) {
             override fun handleOnBackPressed() {
                 SoundManager.playBack()
             }
-        })
+        }
+        onBackPressedDispatcher.addCallback(this, backCallback)
 
         setContent {
             CoveLoungeTheme {
@@ -91,6 +92,8 @@ class MainActivity : ComponentActivity() {
                 }
                 var showSearch by remember { mutableStateOf(false) }
                 var selectedFolder by remember { mutableStateOf<MediaKind?>(null) }
+                val atHome = detailKind == null && selectedVideo == null && selectedAudio == null && selectedImage == null && selectedPreview == null && selectedFolder == null && !showSettings && !showSearch
+                LaunchedEffect(atHome) { backCallback.isEnabled = atHome }
                 var showSplash by remember { mutableStateOf(true) }
                 val infiniteTransition = rememberInfiniteTransition(label = "logo")
                 val scale by infiniteTransition.animateFloat(initialValue = 0.85f, targetValue = 1.15f, animationSpec = infiniteRepeatable(tween(700), RepeatMode.Reverse), label = "scale")
