@@ -23,11 +23,16 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
@@ -67,6 +72,7 @@ fun CoverFlow(
     }
     val pagerState = rememberPagerState(pageCount = { items.size })
     val scope = rememberCoroutineScope()
+    var focusedPosition by remember { mutableStateOf(1) }
     val context = LocalContext.current
     val player = remember { ExoPlayer.Builder(context).build() }
     DisposableEffect(Unit) { onDispose { player.release() } }
@@ -103,7 +109,8 @@ fun CoverFlow(
                     factory = { PlayerView(it).apply { this.player = player; useController = false } },
                     modifier = Modifier
                         .fillMaxSize()
-                        .onFocusChanged { if (it.isFocused) onFocus() }
+                        .alpha(if (focusedPosition == 1) 1f else 0f)
+                        .onFocusChanged { if (it.isFocused) { focusedPosition = 1; onFocus() } }
                         .clickable { onOpen(item) }
                 )
             } else {
@@ -112,7 +119,8 @@ fun CoverFlow(
                     contentDescription = item.title,
                     modifier = Modifier
                         .fillMaxSize()
-                        .onFocusChanged { if (it.isFocused) onFocus() }
+                        .alpha(if (focusedPosition == 1) 1f else 0f)
+                        .onFocusChanged { if (it.isFocused) { focusedPosition = 1; onFocus() } }
                         .clickable { if (page == pagerState.currentPage) onOpen(item) },
                     contentScale = ContentScale.Crop
                 )
@@ -137,16 +145,24 @@ fun CoverFlow(
                 val prev = if (pagerState.currentPage > 0) pagerState.currentPage - 1 else items.size - 1
                 scope.launch { pagerState.animateScrollToPage(prev) }
             },
-            modifier = Modifier.align(Alignment.CenterStart).padding(start = 8.dp)
-        ) { Icon(Icons.Filled.KeyboardArrowLeft, contentDescription = "Previous") }
+            modifier = Modifier
+                .align(Alignment.CenterStart)
+                .padding(start = 8.dp)
+                .onFocusChanged { if (it.isFocused) focusedPosition = 0 }
+                .background(if (focusedPosition == 0) Color.White else Color.Transparent)
+        ) { Icon(Icons.Filled.KeyboardArrowLeft, contentDescription = "Previous", tint = if (focusedPosition == 0) Color.Black else Color.White) }
         // right arrow
         Button(
             onClick = {
                 val next = (pagerState.currentPage + 1) % items.size
                 scope.launch { pagerState.animateScrollToPage(next) }
             },
-            modifier = Modifier.align(Alignment.CenterEnd).padding(end = 8.dp)
-        ) { Icon(Icons.Filled.KeyboardArrowRight, contentDescription = "Next") }
+            modifier = Modifier
+                .align(Alignment.CenterEnd)
+                .padding(end = 8.dp)
+                .onFocusChanged { if (it.isFocused) focusedPosition = 2 }
+                .background(if (focusedPosition == 2) Color.White else Color.Transparent)
+        ) { Icon(Icons.Filled.KeyboardArrowRight, contentDescription = "Next", tint = if (focusedPosition == 2) Color.Black else Color.White) }
 
         // metadata overlay
         Column(
