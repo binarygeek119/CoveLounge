@@ -70,6 +70,7 @@ class MainActivity : ComponentActivity() {
                 var selectedVideo by remember { mutableStateOf<Int?>(null) }
                 var selectedAudio by remember { mutableStateOf<Int?>(null) }
                 var selectedImage by remember { mutableStateOf<Int?>(null) }
+                var selectedPreview by remember { mutableStateOf<Int?>(null) }
                 var detailKind by remember { mutableStateOf<MediaKind?>(null) }
                 var detailId by remember { mutableStateOf<Int?>(null) }
                 var showSettings by remember { mutableStateOf(false) }
@@ -114,7 +115,7 @@ class MainActivity : ComponentActivity() {
                         val id = detailId!!
                         val vm = MediaDetailViewModel(application, kind, id)
                         vm.init(url, token)
-                        MediaDetailScreen(vm, url ?: "", token ?: "", onBack = { detailKind = null; detailId = null }) {
+                        MediaDetailScreen(vm, url ?: "", token ?: "", onBack = { detailKind = null; detailId = null }, onPlay = {
                             SoundManager.playClick()
                             when (kind) {
                                 MediaKind.VIDEO -> selectedVideo = id
@@ -123,8 +124,14 @@ class MainActivity : ComponentActivity() {
                             }
                             detailKind = null
                             detailId = null
-                        }
+                        }, onPreview = {
+                            SoundManager.playClick()
+                            selectedPreview = id
+                            detailKind = null
+                            detailId = null
+                        })
                     }
+                    selectedPreview != null -> PlayerScreen(url!!, token ?: "", "preview", selectedPreview!!) { SoundManager.playBack(); selectedPreview = null }
                     selectedVideo != null -> PlayerScreen(url!!, token ?: "", "video", selectedVideo!!) { SoundManager.playBack(); selectedVideo = null }
                     selectedAudio != null -> PlayerScreen(url!!, token ?: "", "audio", selectedAudio!!) { SoundManager.playBack(); selectedAudio = null }
                     selectedImage != null -> ImageScreen(url!!, token ?: "", selectedImage!!) { SoundManager.playBack(); selectedImage = null }

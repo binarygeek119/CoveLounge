@@ -25,7 +25,8 @@ fun MediaDetailScreen(
     baseUrl: String,
     token: String,
     onBack: () -> Unit,
-    onPlay: () -> Unit
+    onPlay: () -> Unit,
+    onPreview: () -> Unit = {}
 ) {
     val title by viewModel.title.collectAsState()
     val details by viewModel.details.collectAsState()
@@ -39,6 +40,7 @@ fun MediaDetailScreen(
         Text(title ?: "Untitled", color = Color.White, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 8.dp))
         details?.let { Text(it, color = Color.Gray, modifier = Modifier.padding(top = 8.dp)) }
         Button(onClick = { viewModel.recordPlay(); onPlay() }, modifier = Modifier.padding(top = 16.dp)) { Text("Play") }
+        Button(onClick = onPreview, modifier = Modifier.padding(top = 8.dp)) { Text("Preview") }
         Button(onClick = { viewModel.like() }, modifier = Modifier.padding(top = 8.dp)) { Text("Like (${likeCount})") }
     }
 }
