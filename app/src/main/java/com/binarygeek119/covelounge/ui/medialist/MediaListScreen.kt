@@ -5,6 +5,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -31,11 +33,15 @@ fun MediaListScreen(
     val items by viewModel.items.collectAsState()
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
         Text("Back", color = Color.White, modifier = Modifier.clickable { onBack() }.padding(bottom = 8.dp))
-        LazyVerticalGrid(columns = GridCells.Fixed(4), contentPadding = PaddingValues(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            items(items) { item ->
-                Column(modifier = Modifier.clickable { onOpenItem(item) }) {
-                    AsyncImage(model = item.posterUrl, contentDescription = item.title, modifier = Modifier.fillMaxSize().weight(1f))
-                    Text(item.title ?: "Untitled", color = Color.White, fontWeight = FontWeight.Bold)
+        if (items.isEmpty()) {
+            Text("No media found", color = Color.Gray, modifier = Modifier.padding(16.dp))
+        } else {
+            LazyVerticalGrid(columns = GridCells.Fixed(4), contentPadding = PaddingValues(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                items(items) { item ->
+                    Column(modifier = Modifier.clickable { onOpenItem(item) }) {
+                        AsyncImage(model = item.posterUrl, contentDescription = item.title, modifier = Modifier.fillMaxWidth().height(120.dp))
+                        Text(item.title ?: "Untitled", color = Color.White, fontWeight = FontWeight.Bold)
+                    }
                 }
             }
         }
