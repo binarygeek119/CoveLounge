@@ -20,6 +20,7 @@ import androidx.compose.ui.graphics.painter.ColorPainter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.shape.RoundedCornerShape
 import coil.compose.AsyncImage
@@ -61,6 +62,7 @@ fun MediaDetailScreen(
                         modifier = Modifier.fillMaxWidth().height(120.dp).clip(RoundedCornerShape(8.dp)),
                         contentScale = ContentScale.None
                     )
+                    Text("Sprite may not be generated yet.", color = Color.Gray, fontSize = 10.sp, modifier = Modifier.padding(top = 4.dp))
                 }
             }
         }
