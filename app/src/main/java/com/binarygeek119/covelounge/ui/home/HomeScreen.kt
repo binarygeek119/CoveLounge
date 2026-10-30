@@ -77,7 +77,6 @@ fun HomeScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(64.dp)
-                .background(Color.Black.copy(alpha = 0.6f))
         ) {
             Row(
                 modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
