@@ -153,7 +153,7 @@ fun CoverFlow(
                 .padding(start = 8.dp)
                 .onFocusChanged { if (it.isFocused) focusedPosition = 0 }
                 .background(if (focusedPosition == 0) Color.White else Color.Transparent)
-        ) { Icon(Icons.Filled.KeyboardArrowLeft, contentDescription = "Previous", tint = if (focusedPosition == 0) Color.Black else Color.White) }
+        ) { Icon(Icons.Filled.KeyboardArrowLeft, contentDescription = "Previous", tint = Color(0xFF2196F3)) }
         // right arrow
         Button(
             onClick = {
@@ -165,7 +165,7 @@ fun CoverFlow(
                 .padding(end = 8.dp)
                 .onFocusChanged { if (it.isFocused) focusedPosition = 2 }
                 .background(if (focusedPosition == 2) Color.White else Color.Transparent)
-        ) { Icon(Icons.Filled.KeyboardArrowRight, contentDescription = "Next", tint = if (focusedPosition == 2) Color.Black else Color.White) }
+        ) { Icon(Icons.Filled.KeyboardArrowRight, contentDescription = "Next", tint = Color(0xFF2196F3)) }
 
         // metadata overlay
         Column(
