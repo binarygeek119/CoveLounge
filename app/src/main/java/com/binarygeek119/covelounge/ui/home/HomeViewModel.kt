@@ -67,7 +67,7 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
                 if (e.code() == 401 || e.code() == 403) {
                     _error.value = "Authentication failed; please sign in again."
                 }
-            } catch (e: Exception) { if (e is HttpException && (e.code() == 401 || e.code() == 403)) _error.value = "Authentication failed; please sign in again." }
+            } catch (e: Exception) { _error.value = e.message ?: "Failed to load media" }
         }
         load()
     }
@@ -83,7 +83,7 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
                 _screenshots.value = res.items.map { v ->
                     MediaCard(v.id, v.title, "$baseUrl/api/stream/video/${v.id}/screenshot?access_token=$token", MediaKind.VIDEO)
                 }
-            } catch (e: Exception) { if (e is HttpException && (e.code() == 401 || e.code() == 403)) _error.value = "Authentication failed; please sign in again." }
+            } catch (e: Exception) { _error.value = e.message ?: "Failed to load media" }
             try {
                 val res = a.videos(page = 1, perPage = 15, sort = "created_at", direction = "desc")
                 _recentVideos.value = res.items.map { v ->
@@ -92,13 +92,13 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
                     val authUrl = if (url.contains("access_token=")) url else "$url${if (url.contains("?")) "&" else "?"}access_token=$token"
                     MediaCard(v.id, v.title, authUrl, MediaKind.VIDEO)
                 }
-            } catch (e: Exception) { if (e is HttpException && (e.code() == 401 || e.code() == 403)) _error.value = "Authentication failed; please sign in again." }
+            } catch (e: Exception) { _error.value = e.message ?: "Failed to load media" }
             try {
                 val res = a.videos(page = 1, perPage = 15, sort = "last_played_at", direction = "desc")
                 _continueWatching.value = res.items.map { v ->
                     MediaCard(v.id, v.title, "$baseUrl/api/videos/${v.id}/image?max=256&access_token=$token", MediaKind.VIDEO)
                 }
-            } catch (e: Exception) { if (e is HttpException && (e.code() == 401 || e.code() == 403)) _error.value = "Authentication failed; please sign in again." }
+            } catch (e: Exception) { _error.value = e.message ?: "Failed to load media" }
             try {
                 val res = a.audios(page = 1, perPage = 15, sort = "created_at", direction = "desc")
                 _recentAudios.value = res.items.map { aud ->
@@ -107,19 +107,19 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
                     val authUrl = if (url.contains("access_token=")) url else "$url${if (url.contains("?")) "&" else "?"}access_token=$token"
                     MediaCard(aud.id, aud.title, authUrl, MediaKind.AUDIO)
                 }
-            } catch (e: Exception) { if (e is HttpException && (e.code() == 401 || e.code() == 403)) _error.value = "Authentication failed; please sign in again." }
+            } catch (e: Exception) { _error.value = e.message ?: "Failed to load media" }
             try {
                 val res = a.images(page = 1, perPage = 15, sort = "created_at", direction = "desc")
                 _recentImages.value = res.items.map { img ->
                     MediaCard(img.id, img.title, "$baseUrl/api/stream/image/${img.id}?max=256&access_token=$token", MediaKind.IMAGE)
                 }
-            } catch (e: Exception) { if (e is HttpException && (e.code() == 401 || e.code() == 403)) _error.value = "Authentication failed; please sign in again." }
+            } catch (e: Exception) { _error.value = e.message ?: "Failed to load media" }
             try {
                 val res = a.galleries(page = 1, perPage = 15, sort = "created_at", direction = "desc")
                 _recentGalleries.value = res.items.map { g ->
                     MediaCard(g.id, g.title, "$baseUrl/api/galleries/${g.id}/cover?access_token=$token", MediaKind.GALLERY)
                 }
-            } catch (e: Exception) { if (e is HttpException && (e.code() == 401 || e.code() == 403)) _error.value = "Authentication failed; please sign in again." }
+            } catch (e: Exception) { _error.value = e.message ?: "Failed to load media" }
         }
         _isLoading.value = false
     }
