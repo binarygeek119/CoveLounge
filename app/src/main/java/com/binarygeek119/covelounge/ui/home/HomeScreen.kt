@@ -2,8 +2,13 @@ package com.binarygeek119.covelounge.ui.home
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.border
+
+import androidx.compose.foundation.pager.VerticalPager
+import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -95,25 +100,71 @@ fun HomeScreen(
             }
         )
 
-        // Media rows
-        MediaRow(
-            title = "Videos",
-            items = recentVideos,
-            onFolderClick = { onOpenFolder(MediaKind.VIDEO) },
-            onItemClick = { card -> onPlayVideo(card.id) }
+        // Vertical selector area
+        val verticalPagerState = rememberPagerState(pageCount = { 3 })
+        val scope = rememberCoroutineScope()
+        val rows = listOf(
+            Triple("Videos", recentVideos, MediaKind.VIDEO),
+            Triple("Audios", recentAudios, MediaKind.AUDIO),
+            Triple("Images", recentImages, MediaKind.IMAGE)
         )
-        MediaRow(
-            title = "Audios",
-            items = recentAudios,
-            onFolderClick = { onOpenFolder(MediaKind.AUDIO) },
-            onItemClick = { card -> onPlayAudio(card.id) }
-        )
-        MediaRow(
-            title = "Images",
-            items = recentImages,
-            onFolderClick = { onOpenFolder(MediaKind.IMAGE) },
-            onItemClick = { card -> onViewImage(card.id) }
-        )
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(160.dp)
+                .onPreviewKeyEvent { event ->
+                    if (event.nativeKeyEvent.action == android.view.KeyEvent.ACTION_DOWN) {
+                        when (event.nativeKeyEvent.keyCode) {
+                            android.view.KeyEvent.KEYCODE_DPAD_UP -> {
+                                if (verticalPagerState.currentPage > 0) {
+                                    scope.launch { verticalPagerState.animateScrollToPage(verticalPagerState.currentPage - 1) }
+                                }
+                                true
+                            }
+                            android.view.KeyEvent.KEYCODE_DPAD_DOWN -> {
+                                if (verticalPagerState.currentPage < 2) {
+                                    scope.launch { verticalPagerState.animateScrollToPage(verticalPagerState.currentPage + 1) }
+                                }
+                                true
+                            }
+                            else -> false
+                        }
+                    } else false
+                }
+        ) {
+            VerticalPager(
+                state = verticalPagerState,
+                modifier = Modifier.fillMaxSize()
+            ) { page ->
+                val (title, items, kind) = rows[page]
+                MediaRow(
+                    title = title,
+                    items = items,
+                    onFolderClick = {
+                        when (kind) {
+                            MediaKind.VIDEO -> onOpenFolder(MediaKind.VIDEO)
+                            MediaKind.AUDIO -> onOpenFolder(MediaKind.AUDIO)
+                            MediaKind.IMAGE -> onOpenFolder(MediaKind.IMAGE)
+                        }
+                    },
+                    onItemClick = { card ->
+                        when (kind) {
+                            MediaKind.VIDEO -> onPlayVideo(card.id)
+                            MediaKind.AUDIO -> onPlayAudio(card.id)
+                            MediaKind.IMAGE -> onViewImage(card.id)
+                        }
+                    }
+                )
+            }
+            // Fixed selector overlay
+            Box(
+                modifier = Modifier
+                    .align(Alignment.CenterStart)
+                    .padding(start = 16.dp)
+                    .size(150.dp, 100.dp)
+                    .border(4.dp, Color.White, RoundedCornerShape(12.dp))
+            )
+        }
     }
 
     if (showSettings) {
