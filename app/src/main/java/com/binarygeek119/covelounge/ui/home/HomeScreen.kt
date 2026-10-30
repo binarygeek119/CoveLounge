@@ -89,9 +89,12 @@ fun HomeScreen(
         }
 
         // Spotlight bar
-        CoverFlow(
-            items = screenshots,
-            onOpen = { card ->
+        if (screenshots.isEmpty()) {
+            Text("No screenshots available", color = Color.Gray, modifier = Modifier.padding(16.dp))
+        } else {
+            CoverFlow(
+                items = screenshots,
+                onOpen = { card ->
                 when (card.kind) {
                     MediaKind.VIDEO -> onPlayVideo(card.id)
                     MediaKind.AUDIO -> onPlayAudio(card.id)
@@ -99,6 +102,7 @@ fun HomeScreen(
                 }
             }
         )
+        }
 
         // Vertical selector area
         val verticalPagerState = rememberPagerState(pageCount = { 3 })
