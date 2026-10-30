@@ -60,6 +60,12 @@ class MediaListViewModel(app: Application, val kind: MediaKind) : AndroidViewMod
                             MediaCard(img.id, img.title, "$baseUrl/api/stream/image/${img.id}?max=256&access_token=$token", MediaKind.IMAGE)
                         }
                     }
+                    MediaKind.GALLERY -> {
+                        val res = a.galleries(page = 1, perPage = 50, sort = "created_at", direction = "desc")
+                        _items.value = res.items.map { g ->
+                            MediaCard(g.id, g.title, "$baseUrl/api/galleries/${g.id}/cover?access_token=$token", MediaKind.GALLERY)
+                        }
+                    }
                 }
             } catch (_: Exception) {}
         }

@@ -36,6 +36,7 @@ class MediaDetailViewModel(app: Application, val kind: MediaKind, val id: Int) :
                     MediaKind.VIDEO -> a.likeVideo(id)
                     MediaKind.AUDIO -> a.likeAudio(id)
                     MediaKind.IMAGE -> a.likeImage(id)
+                    MediaKind.GALLERY -> 0
                 }
                 _likeCount.value = count
             } catch (_: Exception) {}
@@ -50,6 +51,7 @@ class MediaDetailViewModel(app: Application, val kind: MediaKind, val id: Int) :
                     MediaKind.VIDEO -> a.recordVideoPlay(id)
                     MediaKind.AUDIO -> a.recordAudioPlay(id)
                     MediaKind.IMAGE -> {}
+                    MediaKind.GALLERY -> {}
                 }
             } catch (_: Exception) {}
         }
@@ -92,6 +94,11 @@ class MediaDetailViewModel(app: Application, val kind: MediaKind, val id: Int) :
                         _title.value = dto.title
                         _details.value = dto.details
                         _posterUrl.value = "$baseUrl/api/stream/image/$id?max=512&access_token=$token"
+                    }
+                    MediaKind.GALLERY -> {
+                        val dto = a.galleryDetail(id)
+                        _title.value = dto.title
+                        _posterUrl.value = "$baseUrl/api/galleries/$id/cover?access_token=$token"
                     }
                 }
             } catch (_: Exception) {}

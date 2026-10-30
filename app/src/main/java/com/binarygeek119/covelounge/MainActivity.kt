@@ -121,6 +121,7 @@ class MainActivity : ComponentActivity() {
                                 MediaKind.VIDEO -> selectedVideo = id
                                 MediaKind.AUDIO -> selectedAudio = id
                                 MediaKind.IMAGE -> selectedImage = id
+                                MediaKind.GALLERY -> selectedImage = id
                             }
                             detailKind = null
                             detailId = null
@@ -144,6 +145,7 @@ class MainActivity : ComponentActivity() {
                                 MediaKind.VIDEO -> { detailKind = MediaKind.VIDEO; detailId = card.id }
                                 MediaKind.AUDIO -> { detailKind = MediaKind.AUDIO; detailId = card.id }
                                 MediaKind.IMAGE -> { detailKind = MediaKind.IMAGE; detailId = card.id }
+                                MediaKind.GALLERY -> { detailKind = MediaKind.GALLERY; detailId = card.id }
                             }
                             selectedFolder = null
                         }
@@ -157,6 +159,7 @@ class MainActivity : ComponentActivity() {
                                 MediaKind.VIDEO -> { detailKind = MediaKind.VIDEO; detailId = card.id }
                                 MediaKind.AUDIO -> { detailKind = MediaKind.AUDIO; detailId = card.id }
                                 MediaKind.IMAGE -> { detailKind = MediaKind.IMAGE; detailId = card.id }
+                                MediaKind.GALLERY -> { detailKind = MediaKind.GALLERY; detailId = card.id }
                             }
                             showSearch = false
                         }

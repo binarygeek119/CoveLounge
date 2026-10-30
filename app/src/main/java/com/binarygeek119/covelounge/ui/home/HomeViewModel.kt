@@ -34,6 +34,9 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
     private val _recentImages = MutableStateFlow<List<MediaCard>>(emptyList())
     val recentImages: StateFlow<List<MediaCard>> = _recentImages
 
+    private val _recentGalleries = MutableStateFlow<List<MediaCard>>(emptyList())
+    val recentGalleries: StateFlow<List<MediaCard>> = _recentGalleries
+
     private val _continueWatching = MutableStateFlow<List<MediaCard>>(emptyList())
     val continueWatching: StateFlow<List<MediaCard>> = _continueWatching
 
@@ -109,6 +112,12 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
                 val res = a.images(page = 1, perPage = 15, sort = "created_at", direction = "desc")
                 _recentImages.value = res.items.map { img ->
                     MediaCard(img.id, img.title, "$baseUrl/api/stream/image/${img.id}?max=256&access_token=$token", MediaKind.IMAGE)
+                }
+            } catch (e: Exception) { if (e is HttpException && (e.code() == 401 || e.code() == 403)) _error.value = "Authentication failed; please sign in again." }
+            try {
+                val res = a.galleries(page = 1, perPage = 15, sort = "created_at", direction = "desc")
+                _recentGalleries.value = res.items.map { g ->
+                    MediaCard(g.id, g.title, "$baseUrl/api/galleries/${g.id}/cover?access_token=$token", MediaKind.GALLERY)
                 }
             } catch (e: Exception) { if (e is HttpException && (e.code() == 401 || e.code() == 403)) _error.value = "Authentication failed; please sign in again." }
         }

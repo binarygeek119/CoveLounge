@@ -1,6 +1,6 @@
 package com.binarygeek119.covelounge.data
 
-enum class MediaKind { VIDEO, AUDIO, IMAGE }
+enum class MediaKind { VIDEO, AUDIO, IMAGE, GALLERY }
 
 data class MediaCard(
     val id: Int,

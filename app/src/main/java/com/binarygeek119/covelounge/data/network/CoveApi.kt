@@ -59,6 +59,12 @@ data class ImageDto(
     val details: String? = null
 )
 
+@Serializable
+data class GalleryDto(
+    val id: Int,
+    val title: String? = null
+)
+
 interface CoveApi {
     @POST("auth/login")
     suspend fun login(@Body request: LoginRequest): LoginResponse
@@ -119,6 +125,18 @@ interface CoveApi {
 
     @GET("images/{id}")
     suspend fun imageDetail(@retrofit2.http.Path("id") id: Int): ImageDto
+
+    @GET("galleries")
+    suspend fun galleries(
+        @Query("page") page: Int = 1,
+        @Query("perPage") perPage: Int = 25,
+        @Query("sort") sort: String? = null,
+        @Query("direction") direction: String? = null,
+        @Query("q") q: String? = null
+    ): PaginatedResponse<GalleryDto>
+
+    @GET("galleries/{id}")
+    suspend fun galleryDetail(@retrofit2.http.Path("id") id: Int): GalleryDto
 
     @POST("images/{id}/like")
     suspend fun likeImage(@retrofit2.http.Path("id") id: Int): Int

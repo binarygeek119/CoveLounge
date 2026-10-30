@@ -58,6 +58,7 @@ fun HomeScreen(
     val recentVideos by viewModel.recentVideos.collectAsState()
     val recentAudios by viewModel.recentAudios.collectAsState()
     val recentImages by viewModel.recentImages.collectAsState()
+    val recentGalleries by viewModel.recentGalleries.collectAsState()
     val continueWatching by viewModel.continueWatching.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val error by viewModel.error.collectAsState()
@@ -135,12 +136,13 @@ fun HomeScreen(
         }
 
         // Vertical selector area
-        val verticalPagerState = rememberPagerState(pageCount = { 3 })
+        val verticalPagerState = rememberPagerState(pageCount = { 4 })
         val scope = rememberCoroutineScope()
         val rows = listOf(
             Triple("Videos", recentVideos, MediaKind.VIDEO),
             Triple("Audios", recentAudios, MediaKind.AUDIO),
-            Triple("Images", recentImages, MediaKind.IMAGE)
+            Triple("Images", recentImages, MediaKind.IMAGE),
+            Triple("Galleries", recentGalleries, MediaKind.GALLERY)
         )
         Box(
             modifier = Modifier
@@ -179,6 +181,7 @@ fun HomeScreen(
                             MediaKind.VIDEO -> onOpenFolder(MediaKind.VIDEO)
                             MediaKind.AUDIO -> onOpenFolder(MediaKind.AUDIO)
                             MediaKind.IMAGE -> onOpenFolder(MediaKind.IMAGE)
+                            MediaKind.GALLERY -> onOpenFolder(MediaKind.GALLERY)
                         }
                     },
                     onItemClick = { card -> onOpenItem(kind, card.id) }
