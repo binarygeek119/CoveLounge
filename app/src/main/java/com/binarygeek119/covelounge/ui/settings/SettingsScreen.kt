@@ -1,0 +1,68 @@
+package com.binarygeek119.covelounge.ui.settings
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
+import androidx.compose.material3.Slider
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
+import com.binarygeek119.covelounge.data.SettingsStore
+import kotlinx.coroutines.launch
+
+@Composable
+fun SettingsScreen(onBack: () -> Unit) {
+    val context = LocalContext.current
+    val store = remember { SettingsStore(context) }
+    val scope = rememberCoroutineScope()
+    val previewMode by store.previewMode.collectAsState(initial = "Off")
+    val screenshotCount by store.screenshotCount.collectAsState(initial = 10)
+
+    var selectedMode by remember { mutableStateOf(previewMode) }
+    var selectedCount by remember { mutableStateOf(screenshotCount) }
+
+    Column(
+        modifier = Modifier.fillMaxSize().padding(32.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        Text("Settings")
+        Text("Preview mode: $selectedMode")
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            listOf("Off", "Muted", "Low", "Full").forEach { mode ->
+                Button(onClick = { selectedMode = mode }) {
+                    Text(mode)
+                }
+            }
+        }
+        Text("Screenshot count: $selectedCount")
+        Slider(
+            value = selectedCount.toFloat(),
+            onValueChange = { selectedCount = it.toInt() },
+            valueRange = 1f..30f,
+            modifier = Modifier.fillMaxWidth()
+        )
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Button(onClick = {
+                scope.launch {
+                    store.setPreviewMode(selectedMode)
+                    store.setScreenshotCount(selectedCount)
+                }
+                onBack()
+            }) { Text("Save") }
+            Button(onClick = onBack) { Text("Cancel") }
+        }
+    }
+}

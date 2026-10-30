@@ -33,6 +33,7 @@ import com.binarygeek119.covelounge.ui.login.LoginScreen
 import com.binarygeek119.covelounge.ui.login.LoginViewModel
 import com.binarygeek119.covelounge.ui.media.ImageScreen
 import com.binarygeek119.covelounge.ui.media.PlayerScreen
+import com.binarygeek119.covelounge.ui.settings.SettingsScreen
 import com.binarygeek119.covelounge.ui.theme.CoveLoungeTheme
 
 class MainActivity : ComponentActivity() {
@@ -54,6 +55,7 @@ class MainActivity : ComponentActivity() {
                 var selectedVideo by remember { mutableStateOf<Int?>(null) }
                 var selectedAudio by remember { mutableStateOf<Int?>(null) }
                 var selectedImage by remember { mutableStateOf<Int?>(null) }
+                var showSettings by remember { mutableStateOf(false) }
                 var showSplash by remember { mutableStateOf(true) }
                 val infiniteTransition = rememberInfiniteTransition(label = "logo")
                 val scale by infiniteTransition.animateFloat(initialValue = 0.85f, targetValue = 1.15f, animationSpec = infiniteRepeatable(tween(700), RepeatMode.Reverse), label = "scale")
@@ -82,6 +84,7 @@ class MainActivity : ComponentActivity() {
                     selectedVideo != null -> PlayerScreen(url!!, token ?: "", "video", selectedVideo!!) { SoundManager.playBack(); selectedVideo = null }
                     selectedAudio != null -> PlayerScreen(url!!, token ?: "", "audio", selectedAudio!!) { SoundManager.playBack(); selectedAudio = null }
                     selectedImage != null -> ImageScreen(url!!, token ?: "", selectedImage!!) { SoundManager.playBack(); selectedImage = null }
+                    showSettings -> SettingsScreen { showSettings = false }
                     else -> {
                         BackHandler { SoundManager.playBack(); finish() }
                         homeVm.init(url, token)
@@ -89,7 +92,8 @@ class MainActivity : ComponentActivity() {
                             onPlayVideo = { SoundManager.playClick(); selectedVideo = it },
                             onPlayAudio = { SoundManager.playClick(); selectedAudio = it },
                             onViewImage = { SoundManager.playClick(); selectedImage = it },
-                            onOpenFolder = { })
+                            onOpenFolder = { },
+                            onSettingsClick = { showSettings = true })
                     }
                 }
             }

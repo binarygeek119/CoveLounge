@@ -46,7 +46,8 @@ fun HomeScreen(
     onPlayVideo: (Int) -> Unit,
     onPlayAudio: (Int) -> Unit,
     onViewImage: (Int) -> Unit,
-    onOpenFolder: (MediaKind) -> Unit
+    onOpenFolder: (MediaKind) -> Unit,
+    onSettingsClick: () -> Unit = {}
 ) {
     val screenshots by viewModel.screenshots.collectAsState()
     val recentVideos by viewModel.recentVideos.collectAsState()
@@ -77,7 +78,7 @@ fun HomeScreen(
                 Text(
                     text = "Settings",
                     color = Color.White,
-                    modifier = Modifier.clickable { showSettings = true }
+                    modifier = Modifier.clickable { onSettingsClick() }
                 )
             }
         }
