@@ -23,6 +23,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.focus.onFocusChanged
@@ -114,6 +115,7 @@ fun CoverFlow(
         Box(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
+                .focusProperties { canFocus = false }
                 .fillMaxWidth()
                 .height(90.dp)
                 .background(
@@ -143,6 +145,7 @@ fun CoverFlow(
         Row(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
+                .focusProperties { canFocus = false }
                 .padding(bottom = 12.dp),
             horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
