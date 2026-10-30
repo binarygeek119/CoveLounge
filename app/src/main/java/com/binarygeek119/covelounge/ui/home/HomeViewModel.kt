@@ -33,6 +33,9 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
     private val _recentImages = MutableStateFlow<List<MediaCard>>(emptyList())
     val recentImages: StateFlow<List<MediaCard>> = _recentImages
 
+    private val _continueWatching = MutableStateFlow<List<MediaCard>>(emptyList())
+    val continueWatching: StateFlow<List<MediaCard>> = _continueWatching
+
     private var api: com.binarygeek119.covelounge.data.network.CoveApi? = null
     private var baseUrl: String = ""
     private var token: String = ""
@@ -61,6 +64,12 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
             try {
                 val res = a.videos(page = 1, perPage = 15, sort = "created_at", direction = "desc")
                 _recentVideos.value = res.items.map { v ->
+                    MediaCard(v.id, v.title, "$baseUrl/api/videos/${v.id}/image?max=256&access_token=$token", MediaKind.VIDEO)
+                }
+            } catch (_: Exception) {}
+            try {
+                val res = a.videos(page = 1, perPage = 15, sort = "last_played_at", direction = "desc")
+                _continueWatching.value = res.items.map { v ->
                     MediaCard(v.id, v.title, "$baseUrl/api/videos/${v.id}/image?max=256&access_token=$token", MediaKind.VIDEO)
                 }
             } catch (_: Exception) {}

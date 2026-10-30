@@ -60,6 +60,7 @@ fun HomeScreen(
     val recentVideos by viewModel.recentVideos.collectAsState()
     val recentAudios by viewModel.recentAudios.collectAsState()
     val recentImages by viewModel.recentImages.collectAsState()
+    val continueWatching by viewModel.continueWatching.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val error by viewModel.error.collectAsState()
     val context = androidx.compose.ui.platform.LocalContext.current
@@ -124,6 +125,15 @@ fun HomeScreen(
                 previewUrlProvider = { card ->
                     if (card.kind == MediaKind.VIDEO) "$baseUrl/api/stream/video/${card.id}/preview?access_token=$token" else null
                 }
+            )
+        }
+
+        if (continueWatching.isNotEmpty()) {
+            MediaRow(
+                title = "Continue Watching",
+                items = continueWatching,
+                onFolderClick = {},
+                onItemClick = { card -> onPlayVideo(card.id) }
             )
         }
 
