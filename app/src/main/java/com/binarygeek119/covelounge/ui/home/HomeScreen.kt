@@ -152,7 +152,7 @@ fun HomeScreen(
                                 true
                             }
                             android.view.KeyEvent.KEYCODE_DPAD_DOWN -> {
-                                if (verticalPagerState.currentPage < 2) {
+                                if (verticalPagerState.currentPage < rows.size - 1) {
                                     scope.launch { verticalPagerState.animateScrollToPage(verticalPagerState.currentPage + 1) }
                                 }
                                 true
