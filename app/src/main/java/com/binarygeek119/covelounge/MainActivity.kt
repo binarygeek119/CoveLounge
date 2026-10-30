@@ -12,6 +12,9 @@ import androidx.compose.runtime.mutableStateOf
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.remember
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.animation.core.RepeatMode
@@ -28,7 +31,9 @@ import com.binarygeek119.covelounge.R
 import com.binarygeek119.covelounge.audio.SoundManager
 import com.binarygeek119.covelounge.data.MediaCard
 import com.binarygeek119.covelounge.data.MediaKind
+import com.binarygeek119.covelounge.BuildConfig
 import com.binarygeek119.covelounge.data.ServerStore
+import com.binarygeek119.covelounge.util.UpdateChecker
 import com.binarygeek119.covelounge.quickpin.QuickPinScreen
 import com.binarygeek119.covelounge.quickpin.QuickPinViewModel
 import com.binarygeek119.covelounge.ui.home.HomeScreen
@@ -65,6 +70,14 @@ class MainActivity : ComponentActivity() {
                 var selectedImage by remember { mutableStateOf<Int?>(null) }
                 var showSettings by remember { mutableStateOf(false) }
                 val scope = rememberCoroutineScope()
+                var updateInfo by remember { mutableStateOf<UpdateChecker.ReleaseInfo?>(null) }
+                var downloading by remember { mutableStateOf(false) }
+                LaunchedEffect(Unit) {
+                    val info = UpdateChecker.checkLatest()
+                    if (info != null && UpdateChecker.isNewer(BuildConfig.VERSION_NAME, info.tag)) {
+                        updateInfo = info
+                    }
+                }
                 var showSearch by remember { mutableStateOf(false) }
                 var selectedFolder by remember { mutableStateOf<MediaKind?>(null) }
                 var showSplash by remember { mutableStateOf(true) }
@@ -134,6 +147,31 @@ class MainActivity : ComponentActivity() {
                             onSearchClick = { showSearch = true })
                     }
                 }
+
+            updateInfo?.let { info ->
+                AlertDialog(
+                    onDismissRequest = { updateInfo = null },
+                    title = { Text("Update available") },
+                    text = { Text("Version ${info.tag} is available. Download and install?") },
+                    confirmButton = {
+                        TextButton(onClick = {
+                            if (info.apkUrl != null && !downloading) {
+                                downloading = true
+                                scope.launch {
+                                    val file = UpdateChecker.downloadApk(application, info.apkUrl)
+                                    downloading = false
+                                    if (file != null) UpdateChecker.installApk(application, file)
+                                    updateInfo = null
+                                }
+                            }
+                        }) { Text(if (downloading) "Downloading..." else "Download") }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { updateInfo = null }) { Text("Later") }
+                    }
+                )
+            }
+
             }
         }
     }
