@@ -2,6 +2,8 @@ package com.binarygeek119.covelounge.ui.home
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -77,37 +79,48 @@ fun HomeScreen(
             }
         }
 
-        // Hero cover flow
-        CoverFlow(
-            items = screenshots,
-            onOpen = { card ->
-                when (card.kind) {
-                    MediaKind.VIDEO -> onPlayVideo(card.id)
-                    MediaKind.AUDIO -> onPlayAudio(card.id)
-                    MediaKind.IMAGE -> onViewImage(card.id)
-                }
+        Box(modifier = Modifier.fillMaxSize()) {
+            // Scrollable media rows behind the spotlight bar
+            val scrollState = rememberScrollState()
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(scrollState)
+                    .padding(top = 260.dp)
+            ) {
+                MediaRow(
+                    title = "Videos",
+                    items = recentVideos,
+                    onFolderClick = { onOpenFolder(MediaKind.VIDEO) },
+                    onItemClick = { card -> onPlayVideo(card.id) }
+                )
+                MediaRow(
+                    title = "Audios",
+                    items = recentAudios,
+                    onFolderClick = { onOpenFolder(MediaKind.AUDIO) },
+                    onItemClick = { card -> onPlayAudio(card.id) }
+                )
+                MediaRow(
+                    title = "Images",
+                    items = recentImages,
+                    onFolderClick = { onOpenFolder(MediaKind.IMAGE) },
+                    onItemClick = { card -> onViewImage(card.id) }
+                )
             }
-        )
 
-        // Media rows
-        MediaRow(
-            title = "Videos",
-            items = recentVideos,
-            onFolderClick = { onOpenFolder(MediaKind.VIDEO) },
-            onItemClick = { card -> onPlayVideo(card.id) }
-        )
-        MediaRow(
-            title = "Audios",
-            items = recentAudios,
-            onFolderClick = { onOpenFolder(MediaKind.AUDIO) },
-            onItemClick = { card -> onPlayAudio(card.id) }
-        )
-        MediaRow(
-            title = "Images",
-            items = recentImages,
-            onFolderClick = { onOpenFolder(MediaKind.IMAGE) },
-            onItemClick = { card -> onViewImage(card.id) }
-        )
+            // Spotlight bar overlay
+            CoverFlow(
+                items = screenshots,
+                onOpen = { card ->
+                    when (card.kind) {
+                        MediaKind.VIDEO -> onPlayVideo(card.id)
+                        MediaKind.AUDIO -> onPlayAudio(card.id)
+                        MediaKind.IMAGE -> onViewImage(card.id)
+                    }
+                },
+                modifier = Modifier.align(Alignment.TopCenter)
+            )
+        }
     }
 
     if (showSettings) {
