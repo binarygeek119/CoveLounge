@@ -15,6 +15,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.painter.ColorPainter
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -44,7 +45,14 @@ fun MediaDetailScreen(
         }
         if (viewModel.kind == MediaKind.VIDEO) {
             Text("Sprite sheet:", color = Color.White, modifier = Modifier.padding(top = 8.dp))
-            AsyncImage(model = "$baseUrl/api/stream/video/${viewModel.id}/sprite?access_token=$token", contentDescription = "Sprite", modifier = Modifier.fillMaxWidth().height(120.dp), contentScale = ContentScale.Crop)
+            AsyncImage(
+                model = "$baseUrl/api/stream/video/${viewModel.id}/sprite?access_token=$token",
+                contentDescription = "Sprite",
+                placeholder = ColorPainter(Color(0xFF2A2A3A)),
+                error = ColorPainter(Color(0xFF3A1A1A)),
+                modifier = Modifier.fillMaxWidth().height(120.dp).clip(RoundedCornerShape(8.dp)),
+                contentScale = ContentScale.Fit
+            )
         }
         Text(title ?: "Untitled", color = Color.White, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 8.dp))
         details?.let { Text(it, color = Color.Gray, modifier = Modifier.padding(top = 8.dp)) }
