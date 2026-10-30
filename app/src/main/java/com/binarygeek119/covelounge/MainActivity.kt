@@ -24,10 +24,14 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.res.painterResource
 import com.binarygeek119.covelounge.R
 import com.binarygeek119.covelounge.audio.SoundManager
+import com.binarygeek119.covelounge.data.MediaCard
+import com.binarygeek119.covelounge.data.MediaKind
 import com.binarygeek119.covelounge.data.ServerStore
 import com.binarygeek119.covelounge.quickpin.QuickPinScreen
 import com.binarygeek119.covelounge.quickpin.QuickPinViewModel
 import com.binarygeek119.covelounge.ui.home.HomeScreen
+import com.binarygeek119.covelounge.ui.medialist.MediaListScreen
+import com.binarygeek119.covelounge.ui.medialist.MediaListViewModel
 import com.binarygeek119.covelounge.ui.home.HomeViewModel
 import com.binarygeek119.covelounge.ui.login.LoginScreen
 import com.binarygeek119.covelounge.ui.login.LoginViewModel
@@ -56,6 +60,7 @@ class MainActivity : ComponentActivity() {
                 var selectedAudio by remember { mutableStateOf<Int?>(null) }
                 var selectedImage by remember { mutableStateOf<Int?>(null) }
                 var showSettings by remember { mutableStateOf(false) }
+                var selectedFolder by remember { mutableStateOf<MediaKind?>(null) }
                 var showSplash by remember { mutableStateOf(true) }
                 val infiniteTransition = rememberInfiniteTransition(label = "logo")
                 val scale by infiniteTransition.animateFloat(initialValue = 0.85f, targetValue = 1.15f, animationSpec = infiniteRepeatable(tween(700), RepeatMode.Reverse), label = "scale")
@@ -84,6 +89,19 @@ class MainActivity : ComponentActivity() {
                     selectedVideo != null -> PlayerScreen(url!!, token ?: "", "video", selectedVideo!!) { SoundManager.playBack(); selectedVideo = null }
                     selectedAudio != null -> PlayerScreen(url!!, token ?: "", "audio", selectedAudio!!) { SoundManager.playBack(); selectedAudio = null }
                     selectedImage != null -> ImageScreen(url!!, token ?: "", selectedImage!!) { SoundManager.playBack(); selectedImage = null }
+                    selectedFolder != null -> {
+                        val kind = selectedFolder!!
+                        val vm = MediaListViewModel(application, kind)
+                        MediaListScreen(vm, url ?: "", token ?: "", onBack = { selectedFolder = null }) { card ->
+                            SoundManager.playClick()
+                            when (kind) {
+                                MediaKind.VIDEO -> selectedVideo = card.id
+                                MediaKind.AUDIO -> selectedAudio = card.id
+                                MediaKind.IMAGE -> selectedImage = card.id
+                            }
+                            selectedFolder = null
+                        }
+                    }
                     showSettings -> SettingsScreen { showSettings = false }
                     else -> {
                         BackHandler { SoundManager.playBack(); finish() }
@@ -92,7 +110,7 @@ class MainActivity : ComponentActivity() {
                             onPlayVideo = { SoundManager.playClick(); selectedVideo = it },
                             onPlayAudio = { SoundManager.playClick(); selectedAudio = it },
                             onViewImage = { SoundManager.playClick(); selectedImage = it },
-                            onOpenFolder = { },
+                            onOpenFolder = { kind -> selectedFolder = kind },
                             onSettingsClick = { showSettings = true })
                     }
                 }
