@@ -2,6 +2,7 @@ package com.binarygeek119.covelounge.ui.home
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -22,6 +23,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
@@ -55,11 +57,19 @@ fun MediaRow(
             modifier = Modifier.height(180.dp)
         ) { page ->
             val idx = if (total <= 0) 0 else page % total
-            if (idx == 0) {
-                FolderCard(onClick = onFolderClick)
-            } else {
-                val item = items[idx - 1]
-                ItemCard(item = item, onClick = { onItemClick(item) })
+            val isCurrent = idx == current
+            val scale = if (isCurrent) 1.08f else 1f
+            Box(
+                modifier = Modifier
+                    .scale(scale)
+                    .then(if (isCurrent) Modifier.border(2.dp, Color(0xFF00008B), RoundedCornerShape(12.dp)) else Modifier)
+            ) {
+                if (idx == 0) {
+                    FolderCard(onClick = onFolderClick)
+                } else {
+                    val item = items[idx - 1]
+                    ItemCard(item = item, onClick = { onItemClick(item) })
+                }
             }
         }
         // dots
