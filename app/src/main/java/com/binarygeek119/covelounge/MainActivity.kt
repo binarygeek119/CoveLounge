@@ -166,7 +166,7 @@ class MainActivity : ComponentActivity() {
                     }
                     showSettings -> SettingsScreen(onBack = { showSettings = false }, onLogout = { scope.launch { store.clear() } })
                     else -> {
-                        BackHandler { SoundManager.playBack(); finish() }
+                        BackHandler { SoundManager.playBack() }
                         homeVm.init(url, token)
                         HomeScreen(homeVm, url ?: "", token ?: "",
                             onOpenItem = { kind, id -> SoundManager.playClick(); detailKind = kind; detailId = id },
