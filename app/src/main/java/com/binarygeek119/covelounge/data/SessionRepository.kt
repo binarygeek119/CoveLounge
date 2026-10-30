@@ -53,7 +53,7 @@ class SessionRepository(private val store: ServerStore) {
                 .build()
         }
         val cacheDir = store.context.cacheDir.resolve("http_cache")
-        val cache = okhttp3.Cache(cacheDir, 50L * 1024 * 1024)
+        val cache = okhttp3.Cache(cacheDir, 10L * 1024 * 1024)
         val client = OkHttpClient.Builder()
             .cache(cache)
             .addInterceptor(authInterceptor)
