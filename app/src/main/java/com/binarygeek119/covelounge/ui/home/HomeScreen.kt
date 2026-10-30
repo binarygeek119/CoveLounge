@@ -134,6 +134,7 @@ fun HomeScreen(
                         MediaKind.IMAGE -> onViewImage(card.id)
                     }
                 },
+                onFocus = { scope.launch { scrollState.animateScrollTo(0) } },
                 modifier = Modifier.align(Alignment.TopCenter)
             )
         }

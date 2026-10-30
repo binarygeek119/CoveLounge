@@ -19,6 +19,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import android.view.KeyEvent
 import androidx.compose.ui.graphics.Brush
@@ -34,6 +35,7 @@ import kotlinx.coroutines.delay
 fun CoverFlow(
     items: List<MediaCard>,
     onOpen: (MediaCard) -> Unit,
+    onFocus: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     if (items.isEmpty()) {
@@ -60,6 +62,7 @@ fun CoverFlow(
                 contentDescription = item.title,
                 modifier = Modifier
                     .fillMaxSize()
+                    .onFocusChanged { if (it.isFocused) onFocus() }
                     .clickable { if (page == pagerState.currentPage) onOpen(item) },
                 contentScale = ContentScale.Crop
             )
