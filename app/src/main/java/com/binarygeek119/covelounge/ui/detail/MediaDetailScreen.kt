@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.activity.compose.BackHandler
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -35,6 +36,7 @@ fun MediaDetailScreen(
     val details by viewModel.details.collectAsState()
     val posterUrl by viewModel.posterUrl.collectAsState()
     val likeCount by viewModel.likeCount.collectAsState()
+    BackHandler { onBack() }
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
         Text("Back", color = Color.White, modifier = Modifier.clickable { onBack() }.padding(bottom = 8.dp))
         posterUrl?.let {

@@ -12,6 +12,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.activity.compose.BackHandler
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -71,6 +72,9 @@ fun SettingsScreen(onBack: () -> Unit, onLogout: () -> Unit = {}) {
     }
 
     var category by remember { mutableStateOf("main") }
+    BackHandler {
+        if (category != "main") category = "main" else onBack()
+    }
 
     Column(modifier = Modifier.fillMaxSize().padding(32.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         when (category) {

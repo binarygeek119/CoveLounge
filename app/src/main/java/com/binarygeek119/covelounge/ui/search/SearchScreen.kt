@@ -15,6 +15,7 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.activity.compose.BackHandler
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -41,6 +42,7 @@ fun SearchScreen(
 ) {
     var query by remember { mutableStateOf("") }
     val results by viewModel.results.collectAsState()
+    BackHandler { onBack() }
     var filter by remember { mutableStateOf("All") }
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
         Text("Back", color = Color.White, modifier = Modifier.clickable { onBack() }.padding(bottom = 8.dp))
