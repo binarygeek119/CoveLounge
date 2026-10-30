@@ -9,7 +9,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -20,6 +25,7 @@ import androidx.compose.ui.graphics.painter.ColorPainter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -47,6 +53,9 @@ fun MediaDetailScreen(
                 AsyncImage(model = it, contentDescription = title, modifier = Modifier.weight(1f).fillMaxSize().clip(RoundedCornerShape(8.dp)), contentScale = ContentScale.Crop)
             }
             Column(modifier = Modifier.weight(1f).padding(start = 16.dp)) {
+                IconButton(onClick = { viewModel.recordPlay(); onPlay() }) {
+                    Icon(Icons.Filled.PlayArrow, contentDescription = "Play", tint = Color.White, modifier = Modifier.size(48.dp))
+                }
                 Text(title ?: "Untitled", color = Color.White, fontWeight = FontWeight.Bold)
                 details?.let { Text(it, color = Color.Gray, modifier = Modifier.padding(top = 8.dp)) }
                 Button(onClick = { viewModel.recordPlay(); onPlay() }, modifier = Modifier.padding(top = 16.dp)) { Text("Play") }
