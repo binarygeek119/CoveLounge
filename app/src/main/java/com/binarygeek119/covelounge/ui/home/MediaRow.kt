@@ -36,6 +36,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.binarygeek119.covelounge.data.MediaCard
 
@@ -128,7 +129,7 @@ private fun FolderCard(onClick: () -> Unit) {
             .background(Color(0xFF1E1E2E), RoundedCornerShape(12.dp)),
         contentAlignment = Alignment.Center
     ) {
-        Text("Folder", color = Color.White)
+        Text("📁", color = Color.White, fontSize = 40.sp)
     }
 }
 
