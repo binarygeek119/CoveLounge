@@ -82,9 +82,9 @@ fun CoverFlow(
             items.indices.forEach { i ->
                 Box(
                     modifier = Modifier
-                        .size(8.dp)
+                        .size(if (i == pagerState.currentPage) 10.dp else 6.dp)
                         .background(
-                            if (i == pagerState.currentPage) Color(0xFF00008B) else Color(0xFFADD8E6),
+                            if (i == pagerState.currentPage) Color(0xFFFFD700) else Color(0xFFADD8E6),
                             CircleShape
                         )
                 )
