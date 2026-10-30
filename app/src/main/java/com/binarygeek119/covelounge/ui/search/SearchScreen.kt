@@ -27,6 +27,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.binarygeek119.covelounge.data.MediaCard
+import com.binarygeek119.covelounge.data.MediaKind
 
 @Composable
 fun SearchScreen(
@@ -38,17 +39,31 @@ fun SearchScreen(
 ) {
     var query by remember { mutableStateOf("") }
     val results by viewModel.results.collectAsState()
+    var filter by remember { mutableStateOf("All") }
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
         Text("Back", color = Color.White, modifier = Modifier.clickable { onBack() }.padding(bottom = 8.dp))
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             OutlinedTextField(value = query, onValueChange = { query = it }, label = { Text("Search") }, modifier = Modifier.weight(1f))
             TextButton(onClick = { viewModel.search(query) }) { Text("Go") }
         }
-        if (results.isEmpty()) {
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(bottom = 8.dp)) {
+            listOf("All", "Videos", "Audios", "Images").forEach { f ->
+                TextButton(onClick = { filter = f }) { Text(f, color = if (filter == f) Color.White else Color.Gray) }
+            }
+        }
+        val filtered = if (filter == "All") results else results.filter {
+            when (filter) {
+                "Videos" -> it.kind == MediaKind.VIDEO
+                "Audios" -> it.kind == MediaKind.AUDIO
+                "Images" -> it.kind == MediaKind.IMAGE
+                else -> true
+            }
+        }
+        if (filtered.isEmpty()) {
             Text("No results", color = Color.Gray, modifier = Modifier.padding(top = 16.dp))
         } else {
             LazyVerticalGrid(columns = GridCells.Fixed(4), contentPadding = PaddingValues(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                items(results) { item ->
+                items(filtered) { item ->
                     Column(modifier = Modifier.clickable { onOpenItem(item) }) {
                         AsyncImage(model = item.posterUrl, contentDescription = item.title, modifier = Modifier.fillMaxWidth().height(120.dp))
                         Text(item.title ?: "Untitled", color = Color.White, fontWeight = FontWeight.Bold)
