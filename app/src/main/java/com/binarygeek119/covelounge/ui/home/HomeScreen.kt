@@ -65,6 +65,7 @@ fun HomeScreen(
     val context = androidx.compose.ui.platform.LocalContext.current
     val settingsStore = remember { SettingsStore(context) }
     val previewMode by settingsStore.previewMode.collectAsState(initial = "Off")
+    val screenshotInterval by settingsStore.screenshotInterval.collectAsState(initial = 10)
 
     var showSettings by remember { mutableStateOf(false) }
 
@@ -122,7 +123,8 @@ fun HomeScreen(
                 previewMode = previewMode,
                 previewUrlProvider = { card ->
                     if (card.kind == MediaKind.VIDEO) "$baseUrl/api/stream/video/${card.id}/preview?access_token=$token" else null
-                }
+                },
+                intervalSeconds = screenshotInterval
             )
         }
 

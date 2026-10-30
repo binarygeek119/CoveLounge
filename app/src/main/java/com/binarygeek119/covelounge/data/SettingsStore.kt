@@ -13,9 +13,11 @@ private val Context.settingsDataStore by preferencesDataStore(name = "covelounge
 class SettingsStore(private val context: Context) {
     private val KEY_PREVIEW_MODE = stringPreferencesKey("preview_mode")
     private val KEY_SCREENSHOT_COUNT = intPreferencesKey("screenshot_count")
+    private val KEY_SCREENSHOT_INTERVAL = intPreferencesKey("screenshot_interval")
 
     val previewMode: Flow<String> = context.settingsDataStore.data.map { it[KEY_PREVIEW_MODE] ?: "Off" }
     val screenshotCount: Flow<Int> = context.settingsDataStore.data.map { it[KEY_SCREENSHOT_COUNT] ?: 10 }
+    val screenshotInterval: Flow<Int> = context.settingsDataStore.data.map { it[KEY_SCREENSHOT_INTERVAL] ?: 10 }
 
     suspend fun setPreviewMode(mode: String) {
         context.settingsDataStore.edit { it[KEY_PREVIEW_MODE] = mode }
@@ -23,5 +25,9 @@ class SettingsStore(private val context: Context) {
 
     suspend fun setScreenshotCount(count: Int) {
         context.settingsDataStore.edit { it[KEY_SCREENSHOT_COUNT] = count.coerceIn(1, 30) }
+    }
+
+    suspend fun setScreenshotInterval(seconds: Int) {
+        context.settingsDataStore.edit { it[KEY_SCREENSHOT_INTERVAL] = seconds.coerceIn(10, 120) }
     }
 }

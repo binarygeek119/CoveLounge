@@ -39,6 +39,17 @@ fun SettingsScreen(onBack: () -> Unit, onLogout: () -> Unit = {}) {
     var showAbout by remember { mutableStateOf(false) }
     val url by serverStore.serverUrl.collectAsState(initial = null)
     val token by serverStore.accessToken.collectAsState(initial = null)
+    val previewMode by store.previewMode.collectAsState(initial = "Off")
+    val screenshotCount by store.screenshotCount.collectAsState(initial = 10)
+    val screenshotInterval by store.screenshotInterval.collectAsState(initial = 10)
+    var selectedMode by remember { mutableStateOf(previewMode) }
+    var selectedCount by remember { mutableStateOf(screenshotCount) }
+    var selectedInterval by remember { mutableStateOf(screenshotInterval) }
+    LaunchedEffect(previewMode, screenshotCount, screenshotInterval) {
+        selectedMode = previewMode
+        selectedCount = screenshotCount
+        selectedInterval = screenshotInterval
+    }
     LaunchedEffect(url, token) {
         val u = url
         val t = token
@@ -52,11 +63,6 @@ fun SettingsScreen(onBack: () -> Unit, onLogout: () -> Unit = {}) {
         }
     }
     val scope = rememberCoroutineScope()
-    val previewMode by store.previewMode.collectAsState(initial = "Off")
-    val screenshotCount by store.screenshotCount.collectAsState(initial = 10)
-
-    var selectedMode by remember { mutableStateOf(previewMode) }
-    var selectedCount by remember { mutableStateOf(screenshotCount) }
 
     Column(
         modifier = Modifier.fillMaxSize().padding(32.dp),
@@ -80,11 +86,19 @@ fun SettingsScreen(onBack: () -> Unit, onLogout: () -> Unit = {}) {
             valueRange = 1f..30f,
             modifier = Modifier.fillMaxWidth()
         )
+        Text("Screenshot interval (sec): $selectedInterval")
+        Slider(
+            value = selectedInterval.toFloat(),
+            onValueChange = { selectedInterval = it.toInt() },
+            valueRange = 10f..120f,
+            modifier = Modifier.fillMaxWidth()
+        )
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Button(onClick = {
                 scope.launch {
                     store.setPreviewMode(selectedMode)
                     store.setScreenshotCount(selectedCount)
+                    store.setScreenshotInterval(selectedInterval)
                 }
                 onBack()
             }) { Text("Save") }

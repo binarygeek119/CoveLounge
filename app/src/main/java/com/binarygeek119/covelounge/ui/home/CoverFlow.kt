@@ -45,6 +45,7 @@ fun CoverFlow(
     onFocus: () -> Unit = {},
     previewMode: String = "Off",
     previewUrlProvider: (MediaCard) -> String? = { null },
+    intervalSeconds: Int = 10,
     modifier: Modifier = Modifier
 ) {
     if (items.isEmpty()) {
@@ -59,7 +60,7 @@ fun CoverFlow(
     DisposableEffect(Unit) { onDispose { player.release() } }
     LaunchedEffect(items) {
         while (true) {
-            delay(4000)
+            delay(intervalSeconds * 1000L)
             val next = (pagerState.currentPage + 1) % items.size
             pagerState.animateScrollToPage(next)
         }
