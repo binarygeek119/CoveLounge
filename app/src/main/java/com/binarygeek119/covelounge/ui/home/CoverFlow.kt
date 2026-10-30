@@ -127,7 +127,7 @@ fun CoverFlow(
                 .height(90.dp)
                 .background(
                     Brush.verticalGradient(
-                        colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.85f))
+                        colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.95f))
                     )
                 )
         )
