@@ -27,6 +27,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.foundation.focusable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.draw.scale
@@ -58,13 +59,13 @@ fun MediaRow(
 
     Column(modifier = modifier.fillMaxWidth().padding(vertical = 8.dp)) {
         Text(title, color = Color.White, fontWeight = FontWeight.Bold, modifier = Modifier.padding(start = 16.dp, bottom = 6.dp))
-        Box(modifier = Modifier.height(200.dp).fillMaxWidth()) {
+        Box(modifier = Modifier.height(160.dp).fillMaxWidth()) {
             HorizontalPager(
                 state = pagerState,
                 pageSize = PageSize.Fixed(150.dp),
                 contentPadding = androidx.compose.foundation.layout.PaddingValues(start = 16.dp, end = (screenWidthDp - 16 - 150).dp),
                 pageSpacing = 8.dp,
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier.height(150.dp)
             ) { page ->
                 val idx = if (total <= 0) 0 else page % total
                 val isCurrent = idx == focusedIndex
@@ -72,13 +73,17 @@ fun MediaRow(
                 Box(
                     modifier = Modifier
                         .onFocusChanged { if (it.isFocused) focusedIndex = idx }
+                        .focusable()
+                        .clickable {
+                            if (idx == 0) onFolderClick() else onItemClick(items[idx - 1])
+                        }
                         .scale(scale)
                 ) {
                     if (idx == 0) {
-                        FolderCard(onClick = onFolderClick)
+                        FolderCard(onClick = {})
                     } else {
                         val item = items[idx - 1]
-                        ItemCard(item = item, onClick = { onItemClick(item) })
+                        ItemCard(item = item, onClick = {})
                     }
                 }
             }
@@ -87,7 +92,7 @@ fun MediaRow(
                 modifier = Modifier
                     .align(Alignment.CenterStart)
                     .padding(start = 16.dp)
-                    .size(150.dp, 180.dp)
+                    .size(120.dp, 120.dp)
                     .border(4.dp, Color.White, RoundedCornerShape(12.dp))
             )
         }
@@ -119,9 +124,8 @@ private fun FolderCard(onClick: () -> Unit) {
     Box(
         modifier = Modifier
             .width(150.dp)
-            .height(180.dp)
-            .background(Color(0xFF1E1E2E), RoundedCornerShape(12.dp))
-            .clickable { onClick() },
+            .height(120.dp)
+            .background(Color(0xFF1E1E2E), RoundedCornerShape(12.dp)),
         contentAlignment = Alignment.Center
     ) {
         Text("Folder", color = Color.White)
@@ -133,8 +137,7 @@ private fun ItemCard(item: MediaCard, onClick: () -> Unit) {
     Column(
         modifier = Modifier
             .width(150.dp)
-            .height(180.dp)
-            .clickable { onClick() },
+            .height(120.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
