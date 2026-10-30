@@ -37,11 +37,17 @@ data class PaginatedResponse<T>(
 )
 
 @Serializable
+data class PerformerSummaryDto(
+    val name: String? = null
+)
+
+@Serializable
 data class VideoDto(
     val id: Int,
     val title: String? = null,
     val details: String? = null,
-    val imagePath: String? = null
+    val imagePath: String? = null,
+    val performers: List<PerformerSummaryDto>? = null
 )
 
 @Serializable

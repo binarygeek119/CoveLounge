@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -32,7 +33,9 @@ import android.view.KeyEvent
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.media3.common.MediaItem
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
@@ -140,6 +143,19 @@ fun CoverFlow(
             },
             modifier = Modifier.align(Alignment.CenterEnd).padding(end = 8.dp)
         ) { Text(">") }
+
+        // metadata overlay
+        Column(
+            modifier = Modifier
+                .align(Alignment.BottomStart)
+                .padding(start = 16.dp, bottom = 40.dp)
+        ) {
+            Text(items[pagerState.currentPage].title ?: "", color = Color.White, fontWeight = FontWeight.Bold)
+            val performers = items[pagerState.currentPage].performers
+            if (performers.isNotEmpty()) {
+                Text(performers.joinToString(", "), color = Color.White, fontSize = 12.sp)
+            }
+        }
 
         // dots
         Row(

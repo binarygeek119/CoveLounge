@@ -42,7 +42,7 @@ class MediaListViewModel(app: Application, val kind: MediaKind) : AndroidViewMod
                             val path = v.imagePath ?: "/api/stream/video/${v.id}/screenshot"
                             val url = if (path.startsWith("http")) path else "$baseUrl${if (path.startsWith("/")) path else "/$path"}"
                             val authUrl = if (url.contains("access_token=")) url else "$url${if (url.contains("?")) "&" else "?"}access_token=$token"
-                            MediaCard(v.id, v.title, authUrl, MediaKind.VIDEO)
+                            MediaCard(v.id, v.title, authUrl, MediaKind.VIDEO, v.performers?.mapNotNull { it.name } ?: emptyList())
                         }
                     }
                     MediaKind.AUDIO -> {

@@ -81,7 +81,7 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
                 val count = settingsStore.screenshotCount.first().coerceIn(1, 30)
                 val res = a.videos(page = 1, perPage = count, sort = "random", seed = (0..100000).random())
                 _screenshots.value = res.items.map { v ->
-                    MediaCard(v.id, v.title, "$baseUrl/api/stream/video/${v.id}/screenshot?access_token=$token", MediaKind.VIDEO)
+                    MediaCard(v.id, v.title, "$baseUrl/api/stream/video/${v.id}/screenshot?access_token=$token", MediaKind.VIDEO, v.performers?.mapNotNull { it.name } ?: emptyList())
                 }
             } catch (e: Exception) { _error.value = e.message ?: "Failed to load media" }
             try {
@@ -90,13 +90,13 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
                     val path = v.imagePath ?: "/api/stream/video/${v.id}/screenshot"
                     val url = if (path.startsWith("http")) path else "$baseUrl${if (path.startsWith("/")) path else "/$path"}"
                     val authUrl = if (url.contains("access_token=")) url else "$url${if (url.contains("?")) "&" else "?"}access_token=$token"
-                    MediaCard(v.id, v.title, authUrl, MediaKind.VIDEO)
+                    MediaCard(v.id, v.title, authUrl, MediaKind.VIDEO, v.performers?.mapNotNull { it.name } ?: emptyList())
                 }
             } catch (e: Exception) { _error.value = e.message ?: "Failed to load media" }
             try {
                 val res = a.videos(page = 1, perPage = 15, sort = "last_played_at", direction = "desc")
                 _continueWatching.value = res.items.map { v ->
-                    MediaCard(v.id, v.title, "$baseUrl/api/videos/${v.id}/image?max=256&access_token=$token", MediaKind.VIDEO)
+                    MediaCard(v.id, v.title, "$baseUrl/api/videos/${v.id}/image?max=256&access_token=$token", MediaKind.VIDEO, v.performers?.mapNotNull { it.name } ?: emptyList())
                 }
             } catch (e: Exception) { _error.value = e.message ?: "Failed to load media" }
             try {

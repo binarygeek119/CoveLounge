@@ -6,5 +6,6 @@ data class MediaCard(
     val id: Int,
     val title: String?,
     val posterUrl: String,
-    val kind: MediaKind
+    val kind: MediaKind,
+    val performers: List<String> = emptyList()
 )
