@@ -82,7 +82,6 @@ fun MediaRow(
                         .clickable {
                             if (idx == 0) onFolderClick() else onItemClick(items[idx - 1])
                         }
-                        .scale(scale)
                 ) {
                     if (idx == 0) {
                         FolderCard(onClick = {})
