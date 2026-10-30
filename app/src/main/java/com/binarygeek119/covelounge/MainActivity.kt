@@ -7,8 +7,14 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import kotlinx.coroutines.delay
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import com.binarygeek119.covelounge.R
 import com.binarygeek119.covelounge.data.ServerStore
 import com.binarygeek119.covelounge.quickpin.QuickPinScreen
 import com.binarygeek119.covelounge.quickpin.QuickPinViewModel
@@ -38,9 +44,18 @@ class MainActivity : ComponentActivity() {
                 var selectedVideo by remember { mutableStateOf<Int?>(null) }
                 var selectedAudio by remember { mutableStateOf<Int?>(null) }
                 var selectedImage by remember { mutableStateOf<Int?>(null) }
+                var showSplash by remember { mutableStateOf(true) }
+                LaunchedEffect(Unit) { delay(1500); showSplash = false }
                 if (useQuickPin) LaunchedEffect(Unit) { quickPinVm.start() }
 
-                when {
+                if (showSplash) {
+                    androidx.compose.foundation.layout.Box(
+                        modifier = androidx.compose.ui.Modifier.fillMaxSize(),
+                        contentAlignment = androidx.compose.ui.Alignment.Center
+                    ) {
+                        Image(painter = painterResource(id = R.drawable.logo), contentDescription = "CoveLounge", modifier = androidx.compose.ui.Modifier.fillMaxSize(0.6f), contentScale = ContentScale.Fit)
+                    }
+                } else when {
                     token == null && !loggedIn && !quickSuccess -> {
                         if (useQuickPin) {
                             QuickPinScreen(quickPinVm) { useQuickPin = false }
