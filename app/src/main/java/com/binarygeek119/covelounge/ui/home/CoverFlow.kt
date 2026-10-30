@@ -92,7 +92,7 @@ fun CoverFlow(
     Box(modifier = modifier.height(260.dp).fillMaxWidth().onPreviewKeyEvent { event ->
         if (event.nativeKeyEvent.action == KeyEvent.ACTION_DOWN && event.nativeKeyEvent.keyCode == KeyEvent.KEYCODE_DPAD_UP) true else false
     }) {
-        HorizontalPager(state = pagerState, modifier = Modifier.fillMaxSize()) { page ->
+        HorizontalPager(state = pagerState, userScrollEnabled = false, modifier = Modifier.fillMaxSize()) { page ->
             val item = items[page]
             if (previewMode != "Off" && page == pagerState.currentPage) {
                 AndroidView(
