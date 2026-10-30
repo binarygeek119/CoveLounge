@@ -15,7 +15,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.Composable
@@ -134,7 +138,7 @@ fun CoverFlow(
                 scope.launch { pagerState.animateScrollToPage(prev) }
             },
             modifier = Modifier.align(Alignment.CenterStart).padding(start = 8.dp)
-        ) { Text("<") }
+        ) { Icon(Icons.Filled.KeyboardArrowLeft, contentDescription = "Previous") }
         // right arrow
         Button(
             onClick = {
@@ -142,7 +146,7 @@ fun CoverFlow(
                 scope.launch { pagerState.animateScrollToPage(next) }
             },
             modifier = Modifier.align(Alignment.CenterEnd).padding(end = 8.dp)
-        ) { Text(">") }
+        ) { Icon(Icons.Filled.KeyboardArrowRight, contentDescription = "Next") }
 
         // metadata overlay
         Column(
