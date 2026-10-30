@@ -39,13 +39,19 @@ class MediaListViewModel(app: Application, val kind: MediaKind) : AndroidViewMod
                     MediaKind.VIDEO -> {
                         val res = a.videos(page = 1, perPage = 50, sort = "created_at", direction = "desc")
                         _items.value = res.items.map { v ->
-                            MediaCard(v.id, v.title, "$baseUrl/api/videos/${v.id}/image?max=256&access_token=$token", MediaKind.VIDEO)
+                            val path = v.imagePath ?: "/api/videos/${v.id}/image?max=256"
+                            val url = if (path.startsWith("http")) path else "$baseUrl${if (path.startsWith("/")) path else "/$path"}"
+                            val authUrl = if (url.contains("access_token=")) url else "$url${if (url.contains("?")) "&" else "?"}access_token=$token"
+                            MediaCard(v.id, v.title, authUrl, MediaKind.VIDEO)
                         }
                     }
                     MediaKind.AUDIO -> {
                         val res = a.audios(page = 1, perPage = 50, sort = "created_at", direction = "desc")
                         _items.value = res.items.map { aud ->
-                            MediaCard(aud.id, aud.title, "$baseUrl/api/audios/${aud.id}/image?max=256&access_token=$token", MediaKind.AUDIO)
+                            val path = aud.imagePath ?: "/api/audios/${aud.id}/image?max=256"
+                            val url = if (path.startsWith("http")) path else "$baseUrl${if (path.startsWith("/")) path else "/$path"}"
+                            val authUrl = if (url.contains("access_token=")) url else "$url${if (url.contains("?")) "&" else "?"}access_token=$token"
+                            MediaCard(aud.id, aud.title, authUrl, MediaKind.AUDIO)
                         }
                     }
                     MediaKind.IMAGE -> {
