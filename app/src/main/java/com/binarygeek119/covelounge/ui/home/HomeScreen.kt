@@ -42,6 +42,7 @@ import androidx.compose.ui.unit.dp
 import com.binarygeek119.covelounge.R
 import com.binarygeek119.covelounge.data.MediaCard
 import com.binarygeek119.covelounge.data.MediaKind
+import com.binarygeek119.covelounge.data.SettingsStore
 
 @Composable
 fun HomeScreen(
@@ -58,6 +59,9 @@ fun HomeScreen(
     val recentVideos by viewModel.recentVideos.collectAsState()
     val recentAudios by viewModel.recentAudios.collectAsState()
     val recentImages by viewModel.recentImages.collectAsState()
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val settingsStore = remember { SettingsStore(context) }
+    val previewMode by settingsStore.previewMode.collectAsState(initial = "Off")
 
     var showSettings by remember { mutableStateOf(false) }
 
@@ -95,13 +99,17 @@ fun HomeScreen(
             CoverFlow(
                 items = screenshots,
                 onOpen = { card ->
-                when (card.kind) {
-                    MediaKind.VIDEO -> onPlayVideo(card.id)
-                    MediaKind.AUDIO -> onPlayAudio(card.id)
-                    MediaKind.IMAGE -> onViewImage(card.id)
+                    when (card.kind) {
+                        MediaKind.VIDEO -> onPlayVideo(card.id)
+                        MediaKind.AUDIO -> onPlayAudio(card.id)
+                        MediaKind.IMAGE -> onViewImage(card.id)
+                    }
+                },
+                previewMode = previewMode,
+                previewUrlProvider = { card ->
+                    if (card.kind == MediaKind.VIDEO) "$baseUrl/api/stream/video/${card.id}/preview?access_token=$token" else null
                 }
-            }
-        )
+            )
         }
 
         // Vertical selector area

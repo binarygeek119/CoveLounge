@@ -16,9 +16,13 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import android.view.KeyEvent
@@ -26,6 +30,9 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
+import androidx.media3.common.MediaItem
+import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.ui.PlayerView
 import coil.compose.AsyncImage
 import com.binarygeek119.covelounge.data.MediaCard
 import kotlinx.coroutines.delay
@@ -36,6 +43,8 @@ fun CoverFlow(
     items: List<MediaCard>,
     onOpen: (MediaCard) -> Unit,
     onFocus: () -> Unit = {},
+    previewMode: String = "Off",
+    previewUrlProvider: (MediaCard) -> String? = { null },
     modifier: Modifier = Modifier
 ) {
     if (items.isEmpty()) {
@@ -45,6 +54,9 @@ fun CoverFlow(
         return
     }
     val pagerState = rememberPagerState(pageCount = { items.size })
+    val context = LocalContext.current
+    val player = remember { ExoPlayer.Builder(context).build() }
+    DisposableEffect(Unit) { onDispose { player.release() } }
     LaunchedEffect(items) {
         while (true) {
             delay(4000)
@@ -52,20 +64,46 @@ fun CoverFlow(
             pagerState.animateScrollToPage(next)
         }
     }
+    LaunchedEffect(pagerState.currentPage, previewMode) {
+        if (previewMode == "Off" || items.isEmpty()) {
+            player.stop()
+            return@LaunchedEffect
+        }
+        val url = previewUrlProvider(items[pagerState.currentPage]) ?: return@LaunchedEffect
+        player.setMediaItem(MediaItem.fromUri(url))
+        player.volume = when (previewMode) {
+            "Muted" -> 0f
+            "Low" -> 0.3f
+            "Full" -> 1f
+            else -> 0f
+        }
+        player.prepare()
+        player.playWhenReady = true
+    }
     Box(modifier = modifier.height(260.dp).fillMaxWidth().onPreviewKeyEvent { event ->
         if (event.nativeKeyEvent.action == KeyEvent.ACTION_DOWN && event.nativeKeyEvent.keyCode == KeyEvent.KEYCODE_DPAD_UP) true else false
     }) {
         HorizontalPager(state = pagerState, modifier = Modifier.fillMaxSize()) { page ->
             val item = items[page]
-            AsyncImage(
-                model = item.posterUrl,
-                contentDescription = item.title,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .onFocusChanged { if (it.isFocused) onFocus() }
-                    .clickable { if (page == pagerState.currentPage) onOpen(item) },
-                contentScale = ContentScale.Crop
-            )
+            if (previewMode != "Off" && page == pagerState.currentPage) {
+                AndroidView(
+                    factory = { PlayerView(it).apply { this.player = player; useController = false } },
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .onFocusChanged { if (it.isFocused) onFocus() }
+                        .clickable { onOpen(item) }
+                )
+            } else {
+                AsyncImage(
+                    model = item.posterUrl,
+                    contentDescription = item.title,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .onFocusChanged { if (it.isFocused) onFocus() }
+                        .clickable { if (page == pagerState.currentPage) onOpen(item) },
+                    contentScale = ContentScale.Crop
+                )
+            }
         }
         // bottom blur/transition
         Box(
