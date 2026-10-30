@@ -63,13 +63,12 @@ fun MediaRow(
         ) { page ->
             val idx = if (total <= 0) 0 else page % total
             val isCurrent = idx == focusedIndex
-            val scale = if (isCurrent) 1.15f else 1f
+            val scale = if (isCurrent) 1.3f else 1f
             Box(
                 modifier = Modifier
                     .onFocusChanged { if (it.isFocused) focusedIndex = idx }
                     .scale(scale)
-                    .then(if (isCurrent) Modifier.border(3.dp, Color(0xFFFFD700), RoundedCornerShape(12.dp)) else Modifier)
-                    .then(if (isCurrent) Modifier.background(Color(0x33FFFFFF), RoundedCornerShape(12.dp)) else Modifier)
+                    .then(if (isCurrent) Modifier.border(4.dp, Color.White, RoundedCornerShape(12.dp)) else Modifier)
             ) {
                 if (idx == 0) {
                     FolderCard(onClick = onFolderClick)
@@ -93,7 +92,7 @@ fun MediaRow(
                         .padding(horizontal = 3.dp)
                         .size(if (i == current) 10.dp else 6.dp)
                         .background(
-                            if (i == current) Color(0xFFFFD700) else Color(0xFFADD8E6),
+                            if (i == current) Color.White else Color(0xFFADD8E6),
                             CircleShape
                         )
                 )
