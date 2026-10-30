@@ -102,7 +102,7 @@ fun CoverFlow(
                         .fillMaxSize()
                         .onFocusChanged { if (it.isFocused) onFocus() }
                         .clickable { if (page == pagerState.currentPage) onOpen(item) },
-                    contentScale = ContentScale.Crop
+                    contentScale = ContentScale.Fit
                 )
             }
         }
