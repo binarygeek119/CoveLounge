@@ -83,62 +83,37 @@ fun HomeScreen(
             }
         }
 
-        Box(modifier = Modifier.fillMaxSize()) {
-            // Scrollable media rows behind the spotlight bar
-            val scrollState = rememberScrollState()
-            var focusedRow by remember { mutableStateOf(0) }
-            val scope = rememberCoroutineScope()
-            LaunchedEffect(focusedRow) {
-                scope.launch {
-                    scrollState.animateScrollTo(focusedRow * 160)
+        // Spotlight bar
+        CoverFlow(
+            items = screenshots,
+            onOpen = { card ->
+                when (card.kind) {
+                    MediaKind.VIDEO -> onPlayVideo(card.id)
+                    MediaKind.AUDIO -> onPlayAudio(card.id)
+                    MediaKind.IMAGE -> onViewImage(card.id)
                 }
             }
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(scrollState)
-                    .padding(top = 260.dp)
-            ) {
-                MediaRow(
-                    title = "Videos",
-                    rowIndex = 0,
-                    items = recentVideos,
-                    onFolderClick = { onOpenFolder(MediaKind.VIDEO) },
-                    onItemClick = { card -> onPlayVideo(card.id) },
-                    onRowFocused = { focusedRow = it }
-                )
-                MediaRow(
-                    title = "Audios",
-                    rowIndex = 1,
-                    items = recentAudios,
-                    onFolderClick = { onOpenFolder(MediaKind.AUDIO) },
-                    onItemClick = { card -> onPlayAudio(card.id) },
-                    onRowFocused = { focusedRow = it }
-                )
-                MediaRow(
-                    title = "Images",
-                    rowIndex = 2,
-                    items = recentImages,
-                    onFolderClick = { onOpenFolder(MediaKind.IMAGE) },
-                    onItemClick = { card -> onViewImage(card.id) },
-                    onRowFocused = { focusedRow = it }
-                )
-            }
+        )
 
-            // Spotlight bar overlay
-            CoverFlow(
-                items = screenshots,
-                onOpen = { card ->
-                    when (card.kind) {
-                        MediaKind.VIDEO -> onPlayVideo(card.id)
-                        MediaKind.AUDIO -> onPlayAudio(card.id)
-                        MediaKind.IMAGE -> onViewImage(card.id)
-                    }
-                },
-                onFocus = { scope.launch { scrollState.animateScrollTo(0) } },
-                modifier = Modifier.align(Alignment.TopCenter)
-            )
-        }
+        // Media rows
+        MediaRow(
+            title = "Videos",
+            items = recentVideos,
+            onFolderClick = { onOpenFolder(MediaKind.VIDEO) },
+            onItemClick = { card -> onPlayVideo(card.id) }
+        )
+        MediaRow(
+            title = "Audios",
+            items = recentAudios,
+            onFolderClick = { onOpenFolder(MediaKind.AUDIO) },
+            onItemClick = { card -> onPlayAudio(card.id) }
+        )
+        MediaRow(
+            title = "Images",
+            items = recentImages,
+            onFolderClick = { onOpenFolder(MediaKind.IMAGE) },
+            onItemClick = { card -> onViewImage(card.id) }
+        )
     }
 
     if (showSettings) {

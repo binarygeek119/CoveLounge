@@ -46,7 +46,7 @@ import com.binarygeek119.covelounge.data.MediaCard
 @Composable
 fun MediaRow(
     title: String,
-    rowIndex: Int,
+    rowIndex: Int = 0,
     items: List<MediaCard>,
     onFolderClick: () -> Unit,
     onItemClick: (MediaCard) -> Unit,
