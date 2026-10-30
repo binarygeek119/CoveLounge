@@ -28,11 +28,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.foundation.focusable
+import androidx.compose.foundation.Image
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -128,10 +130,15 @@ private fun FolderCard(onClick: () -> Unit) {
         modifier = Modifier
             .width(150.dp)
             .height(120.dp)
-            .background(Color(0xFF1E1E2E), RoundedCornerShape(12.dp)),
+            .background(Color(0xFF1E3A8A), RoundedCornerShape(12.dp)),
         contentAlignment = Alignment.Center
     ) {
-        Text("📁", color = Color.White, fontSize = 40.sp)
+        Image(
+            painter = painterResource(id = com.binarygeek119.covelounge.R.drawable.logo),
+            contentDescription = "Folder",
+            modifier = Modifier.size(64.dp),
+            contentScale = ContentScale.Fit
+        )
     }
 }
 
