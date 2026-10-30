@@ -6,8 +6,10 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Slider
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -34,6 +36,7 @@ fun SettingsScreen(onBack: () -> Unit, onLogout: () -> Unit = {}) {
     val session = remember { SessionRepository(serverStore) }
     var accountName by remember { mutableStateOf<String?>(null) }
     var permissions by remember { mutableStateOf<List<String>>(emptyList()) }
+    var showAbout by remember { mutableStateOf(false) }
     val url by serverStore.serverUrl.collectAsState(initial = null)
     val token by serverStore.accessToken.collectAsState(initial = null)
     LaunchedEffect(url, token) {
@@ -88,5 +91,15 @@ fun SettingsScreen(onBack: () -> Unit, onLogout: () -> Unit = {}) {
             Button(onClick = onBack) { Text("Cancel") }
         }
         Button(onClick = onLogout) { Text("Log out") }
+        Button(onClick = { showAbout = true }) { Text("About") }
+
+    if (showAbout) {
+        AlertDialog(
+            onDismissRequest = { showAbout = false },
+            title = { Text("About CoveLounge") },
+            text = { Text("Android TV client for Cove.\nVersion 0.2.x") },
+            confirmButton = { TextButton(onClick = { showAbout = false }) { Text("OK") } }
+        )
+    }
     }
 }
