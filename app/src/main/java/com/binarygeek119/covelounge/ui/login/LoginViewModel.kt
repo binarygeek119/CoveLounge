@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.binarygeek119.covelounge.data.ServerStore
 import com.binarygeek119.covelounge.data.SessionRepository
 import com.binarygeek119.covelounge.data.network.LoginRequest
+import com.binarygeek119.covelounge.util.PluginHealthChecker
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -27,6 +28,7 @@ class LoginViewModel(app: Application) : AndroidViewModel(app) {
                 val res = api.login(LoginRequest(username, password))
                 store.save(serverUrl, res.token, res.refreshToken)
                 session.initFromStore(serverUrl, res.token)
+                viewModelScope.launch { PluginHealthChecker.check(serverUrl) }
                 _success.value = true
             } catch (e: Exception) {
                 _status.value = "Login failed: ${e.message}"
@@ -41,6 +43,7 @@ class LoginViewModel(app: Application) : AndroidViewModel(app) {
                 api.me()
                 store.save(serverUrl, apiKey, null)
                 session.initFromStore(serverUrl, apiKey)
+                viewModelScope.launch { PluginHealthChecker.check(serverUrl) }
                 _success.value = true
             } catch (e: Exception) {
                 _status.value = "API key failed: ${e.message}"

@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.binarygeek119.covelounge.data.ServerStore
+import com.binarygeek119.covelounge.util.PluginHealthChecker
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -39,6 +40,7 @@ class QuickPinViewModel(app: Application, private val relayUrl: String = "https:
                             val serverUrl = json.getString("serverUrl")
                             val apiToken = json.getString("apiToken")
                             store.save(serverUrl, apiToken, null)
+                            viewModelScope.launch { PluginHealthChecker.check(serverUrl) }
                             _status.value = "Connected"
                             _success.value = true
                         } catch (e: Exception) {
