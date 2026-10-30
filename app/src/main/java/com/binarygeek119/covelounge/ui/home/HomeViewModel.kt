@@ -6,13 +6,16 @@ import androidx.lifecycle.viewModelScope
 import com.binarygeek119.covelounge.data.MediaCard
 import com.binarygeek119.covelounge.data.MediaKind
 import com.binarygeek119.covelounge.data.ServerStore
+import com.binarygeek119.covelounge.data.SettingsStore
 import com.binarygeek119.covelounge.data.SessionRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class HomeViewModel(app: Application) : AndroidViewModel(app) {
     private val store = ServerStore(app)
+    private val settingsStore = SettingsStore(app)
     private val session = SessionRepository(store)
 
     private val _screenshots = MutableStateFlow<List<MediaCard>>(emptyList())
@@ -42,7 +45,8 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
         val a = api ?: return
         viewModelScope.launch {
             try {
-                val res = a.videos(page = 1, perPage = 30, sort = "random", seed = (0..100000).random())
+                val count = settingsStore.screenshotCount.first().coerceIn(1, 30)
+                val res = a.videos(page = 1, perPage = count, sort = "random", seed = (0..100000).random())
                 _screenshots.value = res.items.map { v ->
                     MediaCard(v.id, v.title, "$baseUrl/api/stream/video/${v.id}/screenshot?access_token=$token", MediaKind.VIDEO)
                 }
