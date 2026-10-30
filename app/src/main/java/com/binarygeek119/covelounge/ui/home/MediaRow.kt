@@ -20,9 +20,13 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -45,7 +49,8 @@ fun MediaRow(
         // still show folder
     }
     val pagerState = rememberPagerState(pageCount = { if (total <= 0) 1 else Int.MAX_VALUE })
-    val current = if (total <= 0) 0 else pagerState.currentPage % total
+    var focusedIndex by remember { mutableStateOf(0) }
+    val current = focusedIndex
 
     Column(modifier = modifier.fillMaxWidth().padding(vertical = 8.dp)) {
         Text(title, modifier = Modifier.padding(start = 16.dp, bottom = 4.dp))
@@ -57,10 +62,11 @@ fun MediaRow(
             modifier = Modifier.height(180.dp)
         ) { page ->
             val idx = if (total <= 0) 0 else page % total
-            val isCurrent = idx == current
+            val isCurrent = idx == focusedIndex
             val scale = if (isCurrent) 1.08f else 1f
             Box(
                 modifier = Modifier
+                    .onFocusChanged { if (it.isFocused) focusedIndex = idx }
                     .scale(scale)
                     .then(if (isCurrent) Modifier.border(2.dp, Color(0xFF00008B), RoundedCornerShape(12.dp)) else Modifier)
             ) {
