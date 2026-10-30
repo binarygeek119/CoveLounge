@@ -58,10 +58,10 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
             try {
                 val me = api?.me()
                 val perms = me?.permissions ?: emptyList()
-                val required = listOf("videos.read", "audios.read", "images.read", "stream.read")
-                val missing = required.filter { it !in perms }
-                if (missing.isNotEmpty()) {
-                    _error.value = "Missing permissions: ${missing.joinToString(", ")}"
+                // Log available permissions for debugging; don't block loading.
+                android.util.Log.d("HomeViewModel", "Permissions: $perms")
+                if (perms.isEmpty()) {
+                    _error.value = "No permissions returned; media may not load."
                 }
             } catch (e: HttpException) {
                 if (e.code() == 401 || e.code() == 403) {
