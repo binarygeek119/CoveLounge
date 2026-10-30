@@ -107,6 +107,11 @@ fun HomeScreen(
             Text("Loading...", color = Color.Gray, modifier = Modifier.padding(16.dp))
         }
         error?.let { Text("Error: $it", color = Color.Red, modifier = Modifier.padding(16.dp)) }
+        if (error != null) {
+            androidx.compose.material3.Button(onClick = { viewModel.reload() }) {
+                Text("Retry")
+            }
+        }
 
         // Spotlight bar
         if (screenshots.isEmpty()) {

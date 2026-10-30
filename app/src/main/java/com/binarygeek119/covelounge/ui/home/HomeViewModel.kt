@@ -40,6 +40,10 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
     private var baseUrl: String = ""
     private var token: String = ""
 
+    fun reload() {
+        load()
+    }
+
     fun init(serverUrl: String?, authToken: String?) {
         if (serverUrl == null || authToken == null) return
         if (api != null && baseUrl == serverUrl && token == authToken) return
