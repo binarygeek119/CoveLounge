@@ -154,8 +154,10 @@ fun HomeScreen(
                                         verticalPagerState.animateScrollToPage(target)
                                         focusRequesters.getOrElse(target) { FocusRequester() }.requestFocus()
                                     }
+                                    true
+                                } else {
+                                    false
                                 }
-                                true
                             }
                             android.view.KeyEvent.KEYCODE_DPAD_DOWN -> {
                                 if (verticalPagerState.currentPage < rows.size - 1) {
@@ -164,8 +166,10 @@ fun HomeScreen(
                                         verticalPagerState.animateScrollToPage(target)
                                         focusRequesters.getOrElse(target) { FocusRequester() }.requestFocus()
                                     }
+                                    true
+                                } else {
+                                    false
                                 }
-                                true
                             }
                             else -> false
                         }
