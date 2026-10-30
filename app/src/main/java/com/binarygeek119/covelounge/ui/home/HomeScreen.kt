@@ -72,14 +72,36 @@ fun HomeScreen(
     var showSettings by remember { mutableStateOf(false) }
 
     Column(modifier = Modifier.fillMaxSize().background(Color.Black)) {
-        // Top bar
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(64.dp)
-        ) {
+        if (isLoading) {
+            Text("Loading...", color = Color.Gray, modifier = Modifier.padding(16.dp))
+        }
+        error?.let { Text("Error: $it", color = Color.Red, modifier = Modifier.padding(16.dp)) }
+        if (error != null) {
+            androidx.compose.material3.Button(onClick = { viewModel.reload() }) {
+                Text("Retry")
+            }
+        }
+
+        // Spotlight bar (fills top, with logo/settings overlay)
+        Box(modifier = Modifier.fillMaxWidth()) {
+            if (screenshots.isEmpty()) {
+                Text("No screenshots available", color = Color.Gray, modifier = Modifier.padding(16.dp))
+            } else {
+                CoverFlow(
+                    items = screenshots,
+                    onOpen = { card -> onOpenItem(card.kind, card.id) },
+                    previewMode = previewMode,
+                    previewUrlProvider = { card ->
+                        if (card.kind == MediaKind.VIDEO) "$baseUrl/api/stream/video/${card.id}/preview?access_token=$token" else null
+                    },
+                    intervalSeconds = screenshotInterval
+                )
+            }
             Row(
-                modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
@@ -102,31 +124,6 @@ fun HomeScreen(
                     )
                 }
             }
-        }
-
-        if (isLoading) {
-            Text("Loading...", color = Color.Gray, modifier = Modifier.padding(16.dp))
-        }
-        error?.let { Text("Error: $it", color = Color.Red, modifier = Modifier.padding(16.dp)) }
-        if (error != null) {
-            androidx.compose.material3.Button(onClick = { viewModel.reload() }) {
-                Text("Retry")
-            }
-        }
-
-        // Spotlight bar
-        if (screenshots.isEmpty()) {
-            Text("No screenshots available", color = Color.Gray, modifier = Modifier.padding(16.dp))
-        } else {
-            CoverFlow(
-                items = screenshots,
-                onOpen = { card -> onOpenItem(card.kind, card.id) },
-                previewMode = previewMode,
-                previewUrlProvider = { card ->
-                    if (card.kind == MediaKind.VIDEO) "$baseUrl/api/stream/video/${card.id}/preview?access_token=$token" else null
-                },
-                intervalSeconds = screenshotInterval
-            )
         }
 
         // Vertical selector area
