@@ -75,7 +75,6 @@ fun MediaRow(
             ) { page ->
                 val idx = if (total <= 0) 0 else page % total
                 val isCurrent = idx == focusedIndex
-                val scale = if (isCurrent) 1.3f else 1f
                 Box(
                     modifier = Modifier
                         .onFocusChanged { if (it.isFocused) { focusedIndex = idx; onRowFocused(rowIndex) } }
@@ -97,7 +96,7 @@ fun MediaRow(
                 modifier = Modifier
                     .align(Alignment.CenterStart)
                     .padding(start = 16.dp)
-                    .size(100.dp, 100.dp)
+                    .size(150.dp, 100.dp)
                     .border(4.dp, Color.White, RoundedCornerShape(12.dp))
             )
         }
