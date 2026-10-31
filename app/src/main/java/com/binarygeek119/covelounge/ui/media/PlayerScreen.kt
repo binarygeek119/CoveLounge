@@ -94,6 +94,12 @@ fun PlayerScreen(baseUrl: String, token: String, type: String, id: Int, onBack: 
     var heartFocused by remember { mutableStateOf(false) }
     val playbackFr = remember { FocusRequester() }
     var playbackFocused by remember { mutableStateOf(false) }
+    val playPauseFr = remember { FocusRequester() }
+    var playPauseFocused by remember { mutableStateOf(false) }
+    val rewindFr = remember { FocusRequester() }
+    var rewindFocused by remember { mutableStateOf(false) }
+    val forwardFr = remember { FocusRequester() }
+    var forwardFocused by remember { mutableStateOf(false) }
     var isFavorite by remember { mutableStateOf(false) }
     val thumbFr = remember { FocusRequester() }
     var thumbFocused by remember { mutableStateOf(false) }
@@ -180,6 +186,8 @@ fun PlayerScreen(baseUrl: String, token: String, type: String, id: Int, onBack: 
                     KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER -> {
                         when {
                             playbackFocused -> { if (player.isPlaying) player.pause() else player.play(); true }
+                            playbackFocused -> { if (player.isPlaying) player.pause() else player.play(); true }
+                            playPauseFocused -> { if (player.isPlaying) player.pause() else player.play(); true }
                             gearFocused -> { showGearMenu = true; true }
                             heartFocused -> { toggleFavorite(); true }
                             thumbFocused -> { likeVideo(); true }
@@ -187,7 +195,7 @@ fun PlayerScreen(baseUrl: String, token: String, type: String, id: Int, onBack: 
                         }
                     }
                     KeyEvent.KEYCODE_DPAD_UP -> {
-                        if (heartFocused || thumbFocused || gearFocused) {
+                        if (playPauseFocused || rewindFocused || forwardFocused || heartFocused || thumbFocused || gearFocused) {
                             runCatching { playbackFr.requestFocus() }; true
                         } else {
                             showGearMenu = true; true
@@ -299,23 +307,25 @@ fun PlayerScreen(baseUrl: String, token: String, type: String, id: Int, onBack: 
             ) {
                 IconButton(
                     onClick = { if (player.isPlaying) player.pause() else player.play() },
-                    modifier = Modifier.focusRequester(playbackFr).onFocusChanged { playbackFocused = it.isFocused }
+                    modifier = Modifier.focusRequester(playPauseFr).onFocusChanged { playPauseFocused = it.isFocused }
                 ) {
                     Icon(
                         imageVector = if (player.isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
                         contentDescription = "Play/Pause",
-                        tint = Color.White
+                        tint = if (playPauseFocused) Color(0xFF2196F3) else Color.White
                     )
                 }
                 IconButton(
-                    onClick = { player.seekBack() }
+                    onClick = { player.seekBack() },
+                    modifier = Modifier.focusRequester(rewindFr).onFocusChanged { rewindFocused = it.isFocused }
                 ) {
-                    Icon(imageVector = Icons.Filled.FastRewind, contentDescription = "Rewind", tint = Color.White)
+                    Icon(imageVector = Icons.Filled.FastRewind, contentDescription = "Rewind", tint = if (rewindFocused) Color(0xFF2196F3) else Color.White)
                 }
                 IconButton(
-                    onClick = { player.seekForward() }
+                    onClick = { player.seekForward() },
+                    modifier = Modifier.focusRequester(forwardFr).onFocusChanged { forwardFocused = it.isFocused }
                 ) {
-                    Icon(imageVector = Icons.Filled.FastForward, contentDescription = "Forward", tint = Color.White)
+                    Icon(imageVector = Icons.Filled.FastForward, contentDescription = "Forward", tint = if (forwardFocused) Color(0xFF2196F3) else Color.White)
                 }
                 IconButton(
                     onClick = { toggleFavorite() },
@@ -326,7 +336,7 @@ fun PlayerScreen(baseUrl: String, token: String, type: String, id: Int, onBack: 
                     Icon(
                         painter = painterResource(R.drawable.ic_fa_heart),
                         contentDescription = "Favorite",
-                        tint = if (isFavorite) Color(0xFFFF4081) else Color.White
+                        tint = if (heartFocused) Color(0xFF2196F3) else if (isFavorite) Color(0xFFFF4081) else Color.White
                     )
                 }
                 IconButton(
