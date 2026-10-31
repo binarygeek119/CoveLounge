@@ -9,14 +9,13 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.ThumbUp
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material3.Button
@@ -39,9 +38,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.painterResource
 import coil.compose.AsyncImage
 import com.binarygeek119.covelounge.R
 
@@ -82,63 +80,65 @@ fun MediaDetailScreen(
                 AsyncImage(model = it, contentDescription = title, modifier = Modifier.weight(1f).fillMaxSize().clip(RoundedCornerShape(8.dp)), contentScale = ContentScale.Crop)
             }
             Column(modifier = Modifier.weight(1f).padding(start = 16.dp)) {
-                // Play control: icon only, selectable with the remote (OK opens playback)
-                Box(
-                    modifier = Modifier
-                        .focusRequester(playFr)
-                        .onFocusChanged { playFocused = it.isFocused }
-                        .onPreviewKeyEvent { event ->
-                            if (event.nativeKeyEvent.action == KeyEvent.ACTION_DOWN) {
-                                when (event.nativeKeyEvent.keyCode) {
-                                    KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER -> {
-                                        viewModel.recordPlay(); onPlay(); true
-                                    }
-                                    else -> false
-                                }
-                            } else false
-                        }
-                        .background(if (playFocused) Color(0xFF2196F3) else Color(0x33FFFFFF), CircleShape)
-                        .clickable { viewModel.recordPlay(); onPlay() }
-                        .padding(12.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_fa_play),
-                        contentDescription = "Play",
-                        tint = Color.White,
-                        modifier = Modifier.size(48.dp)
-                    )
-                }
                 Text(title ?: "Untitled", color = Color.White, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 8.dp))
                 details?.let { Text(it, color = Color.LightGray, modifier = Modifier.padding(top = 8.dp)) }
-                Box(
-                    modifier = Modifier
-                        .padding(top = 16.dp)
-                        .focusRequester(previewFr)
-                        .onFocusChanged { previewFocused = it.isFocused }
-                        .onPreviewKeyEvent { event ->
-                            if (event.nativeKeyEvent.action == KeyEvent.ACTION_DOWN) {
-                                when (event.nativeKeyEvent.keyCode) {
-                                    KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER -> { onPreview(); true }
-                                    else -> false
-                                }
-                            } else false
-                        }
-                        .background(if (previewFocused) Color(0xFF2196F3) else Color(0x33FFFFFF), CircleShape)
-                        .clickable { onPreview() }
-                        .padding(12.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        Icons.Filled.Visibility,
-                        contentDescription = "Preview",
-                        tint = Color.White,
-                        modifier = Modifier.size(32.dp)
-                    )
-                }
-                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 8.dp)) {
+                // All action buttons in one row
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 16.dp)) {
+                    // Play
                     Box(
                         modifier = Modifier
+                            .focusRequester(playFr)
+                            .onFocusChanged { playFocused = it.isFocused }
+                            .onPreviewKeyEvent { event ->
+                                if (event.nativeKeyEvent.action == KeyEvent.ACTION_DOWN) {
+                                    when (event.nativeKeyEvent.keyCode) {
+                                        KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER -> { viewModel.recordPlay(); onPlay(); true }
+                                        else -> false
+                                    }
+                                } else false
+                            }
+                            .background(if (playFocused) Color(0xFF2196F3) else Color(0x33FFFFFF), CircleShape)
+                            .clickable { viewModel.recordPlay(); onPlay() }
+                            .padding(12.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_fa_play),
+                            contentDescription = "Play",
+                            tint = Color.White,
+                            modifier = Modifier.size(48.dp)
+                        )
+                    }
+                    // Preview
+                    Box(
+                        modifier = Modifier
+                            .padding(start = 8.dp)
+                            .focusRequester(previewFr)
+                            .onFocusChanged { previewFocused = it.isFocused }
+                            .onPreviewKeyEvent { event ->
+                                if (event.nativeKeyEvent.action == KeyEvent.ACTION_DOWN) {
+                                    when (event.nativeKeyEvent.keyCode) {
+                                        KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER -> { onPreview(); true }
+                                        else -> false
+                                    }
+                                } else false
+                            }
+                            .background(if (previewFocused) Color(0xFF2196F3) else Color(0x33FFFFFF), CircleShape)
+                            .clickable { onPreview() }
+                            .padding(12.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            Icons.Filled.Visibility,
+                            contentDescription = "Preview",
+                            tint = Color.White,
+                            modifier = Modifier.size(32.dp)
+                        )
+                    }
+                    // Like
+                    Box(
+                        modifier = Modifier
+                            .padding(start = 8.dp)
                             .focusRequester(likeFr)
                             .onFocusChanged { likeFocused = it.isFocused }
                             .onPreviewKeyEvent { event ->
@@ -162,31 +162,32 @@ fun MediaDetailScreen(
                         )
                     }
                     Text(" $likeCount", color = Color.White, modifier = Modifier.padding(start = 4.dp))
-                }
-                Box(
-                    modifier = Modifier
-                        .padding(top = 8.dp)
-                        .focusRequester(heartFr)
-                        .onFocusChanged { heartFocused = it.isFocused }
-                        .onPreviewKeyEvent { event ->
-                            if (event.nativeKeyEvent.action == KeyEvent.ACTION_DOWN) {
-                                when (event.nativeKeyEvent.keyCode) {
-                                    KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER -> { viewModel.toggleFavorite(); true }
-                                    else -> false
-                                }
-                            } else false
-                        }
-                        .background(if (heartFocused) Color(0xFF2196F3) else Color(0x33FFFFFF), CircleShape)
-                        .clickable { viewModel.toggleFavorite() }
-                        .padding(12.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        Icons.Filled.Favorite,
-                        contentDescription = "Favorite",
-                        tint = if (isFavorite) Color(0xFFFF4081) else Color.White,
-                        modifier = Modifier.size(32.dp)
-                    )
+                    // Favorite
+                    Box(
+                        modifier = Modifier
+                            .padding(start = 8.dp)
+                            .focusRequester(heartFr)
+                            .onFocusChanged { heartFocused = it.isFocused }
+                            .onPreviewKeyEvent { event ->
+                                if (event.nativeKeyEvent.action == KeyEvent.ACTION_DOWN) {
+                                    when (event.nativeKeyEvent.keyCode) {
+                                        KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER -> { viewModel.toggleFavorite(); true }
+                                        else -> false
+                                    }
+                                } else false
+                            }
+                            .background(if (heartFocused) Color(0xFF2196F3) else Color(0x33FFFFFF), CircleShape)
+                            .clickable { viewModel.toggleFavorite() }
+                            .padding(12.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            Icons.Filled.Favorite,
+                            contentDescription = "Favorite",
+                            tint = if (isFavorite) Color(0xFFFF4081) else Color.White,
+                            modifier = Modifier.size(32.dp)
+                        )
+                    }
                 }
             }
         }
