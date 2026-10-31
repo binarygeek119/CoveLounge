@@ -1,6 +1,7 @@
 package com.binarygeek119.covelounge.ui.media
 
 import android.net.Uri
+import android.util.Log
 import android.graphics.Bitmap
 import android.graphics.drawable.BitmapDrawable
 import android.view.KeyEvent
@@ -184,7 +185,8 @@ fun PlayerScreen(baseUrl: String, token: String, type: String, id: Int, onBack: 
             val st = player.playbackState
             if (st == Player.STATE_READY || st == Player.STATE_BUFFERING) {
                 savedPosition = player.currentPosition
-                if (!isScrubbing) position = player.currentPosition
+                if (!isScrubbing && player.playbackState == Player.STATE_READY) position = player.currentPosition
+                Log.d("SeekTest", "poll st=${player.playbackState} dur=$duration curPos=${player.currentPosition} pos=$position isScrub=$isScrubbing")
                 val d = player.duration
                 if (d > 0) duration = d
             }
@@ -239,7 +241,7 @@ fun PlayerScreen(baseUrl: String, token: String, type: String, id: Int, onBack: 
                     }
                     KeyEvent.KEYCODE_DPAD_RIGHT -> {
                         if (playbackFocused) { player.seekForward(); true }
-                        else if (sliderFocused) { player.seekForward(); true }
+                        else if (sliderFocused) { Log.d("SeekTest", "RIGHT before pos=$position"); player.seekForward(); true }
                         else false
                     }
                     KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE, KeyEvent.KEYCODE_MEDIA_PLAY, KeyEvent.KEYCODE_MEDIA_PAUSE -> {
