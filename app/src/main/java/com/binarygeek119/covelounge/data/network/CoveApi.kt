@@ -167,6 +167,13 @@ interface CoveApi {
         @Body body: EntityFavoriteDto
     ): EntityEngagementDto
 
+    @PUT("engagement/{hostType}/{id}/rating")
+    suspend fun setRating(
+        @retrofit2.http.Path("hostType") hostType: String,
+        @retrofit2.http.Path("id") id: Int,
+        @Body body: VideoRatingDto
+    ): EntityEngagementDto
+
     @GET("performers")
     suspend fun performers(
         @Query("page") page: Int = 1,
@@ -180,7 +187,9 @@ interface CoveApi {
 data class EntityEngagementDto(
     val hostId: Int = 0,
     val isFavorite: Boolean = false,
-    val playCount: Int = 0
+    val rating: Int? = null,
+    val playCount: Int = 0,
+    val likeCount: Int = 0
 )
 
 @Serializable
@@ -192,3 +201,6 @@ data class PerformerDto(
     val name: String? = null,
     val imagePath: String? = null
 )
+
+@Serializable
+data class VideoRatingDto(val value: Int? = null, val aspect: String = "overall")

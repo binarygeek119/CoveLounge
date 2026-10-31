@@ -81,6 +81,7 @@ fun PlayerScreen(baseUrl: String, token: String, type: String, id: Int, onBack: 
     val settings = remember { SettingsStore(context) }
     val useTranscode by settings.useTranscode.collectAsState(initial = false)
     val transcodeResolution by settings.transcodeResolution.collectAsState(initial = "720p")
+    val ratingsOnExit by settings.ratingsOnExit.collectAsState(initial = false)
 
     val url = when (type) {
         "video" -> if (useTranscode)
@@ -92,6 +93,7 @@ fun PlayerScreen(baseUrl: String, token: String, type: String, id: Int, onBack: 
     }
 
     var showGearMenu by remember { mutableStateOf(false) }
+    var showRatings by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     val gearFr = remember { FocusRequester() }
     var gearFocused by remember { mutableStateOf(false) }
@@ -160,7 +162,14 @@ fun PlayerScreen(baseUrl: String, token: String, type: String, id: Int, onBack: 
         }
     }
 
-    BackHandler { if (showGearMenu) showGearMenu = false else onBack() }
+    BackHandler {
+        when {
+            showRatings -> showRatings = false
+            showGearMenu -> showGearMenu = false
+            ratingsOnExit -> showRatings = true
+            else -> onBack()
+        }
+    }
 
     val player = remember { ExoPlayer.Builder(context).build() }
     DisposableEffect(Unit) { onDispose { player.release() } }
@@ -174,6 +183,10 @@ fun PlayerScreen(baseUrl: String, token: String, type: String, id: Int, onBack: 
                 savedPosition = player.currentPosition
                 position = player.currentPosition
                 duration = player.duration.coerceAtLeast(0L)
+            }
+            if (player.playbackState == Player.STATE_ENDED && type != "audio" && !showRatings) {
+                showRatings = true
+                player.pause()
             }
         }
     }
@@ -437,6 +450,16 @@ fun PlayerScreen(baseUrl: String, token: String, type: String, id: Int, onBack: 
                 }
             }
         }
+    }
+
+    if (showRatings) {
+        com.binarygeek119.covelounge.ui.ratings.RatingsScreen(
+            baseUrl = baseUrl,
+            token = token,
+            type = type,
+            id = id,
+            onExit = { showRatings = false; onBack() }
+        )
     }
 
     if (showGearMenu) {

@@ -51,19 +51,22 @@ fun SettingsScreen(onBack: () -> Unit, onLogout: () -> Unit = {}) {
     val screenshotInterval by store.screenshotInterval.collectAsState(initial = 10)
     val useTranscode by store.useTranscode.collectAsState(initial = false)
     val transcodeResolution by store.transcodeResolution.collectAsState(initial = "720p")
+    val ratingsOnExit by store.ratingsOnExit.collectAsState(initial = false)
     var selectedMode by remember { mutableStateOf(previewMode) }
     var selectedCount by remember { mutableStateOf(screenshotCount) }
     var selectedInterval by remember { mutableStateOf(screenshotInterval) }
     var selectedUseTranscode by remember { mutableStateOf(useTranscode) }
     var selectedResolution by remember { mutableStateOf(transcodeResolution) }
+    var selectedRatingsOnExit by remember { mutableStateOf(ratingsOnExit) }
     val scope = rememberCoroutineScope()
 
-    LaunchedEffect(previewMode, screenshotCount, screenshotInterval, useTranscode, transcodeResolution) {
+    LaunchedEffect(previewMode, screenshotCount, screenshotInterval, useTranscode, transcodeResolution, ratingsOnExit) {
         selectedMode = previewMode
         selectedCount = screenshotCount
         selectedInterval = screenshotInterval
         selectedUseTranscode = useTranscode
         selectedResolution = transcodeResolution
+        selectedRatingsOnExit = ratingsOnExit
     }
     LaunchedEffect(url, token) {
         val u = url
@@ -129,6 +132,8 @@ fun SettingsScreen(onBack: () -> Unit, onLogout: () -> Unit = {}) {
                         Button(onClick = { selectedResolution = res }) { Text(res) }
                     }
                 }
+                Text("Show ratings page on exit: $selectedRatingsOnExit")
+                Button(onClick = { selectedRatingsOnExit = !selectedRatingsOnExit }) { Text(if (selectedRatingsOnExit) "On" else "Off") }
                 Button(onClick = {
                     scope.launch {
                         store.setPreviewMode(selectedMode)
@@ -136,6 +141,7 @@ fun SettingsScreen(onBack: () -> Unit, onLogout: () -> Unit = {}) {
                         store.setScreenshotInterval(selectedInterval)
                         store.setUseTranscode(selectedUseTranscode)
                         store.setTranscodeResolution(selectedResolution)
+                        store.setRatingsOnExit(selectedRatingsOnExit)
                     }
                     category = "main"
                 }) { Text("Save") }
