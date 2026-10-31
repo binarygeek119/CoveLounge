@@ -105,6 +105,7 @@ fun PlayerScreen(baseUrl: String, token: String, type: String, id: Int, onBack: 
     var thumbFocused by remember { mutableStateOf(false) }
     var likeCount by remember { mutableStateOf(0) }
     var viewCount by remember { mutableStateOf(0) }
+    var title by remember { mutableStateOf<String?>(null) }
     var position by remember { mutableStateOf(0L) }
     var duration by remember { mutableStateOf(0L) }
     var spriteBitmap by remember { mutableStateOf<Bitmap?>(null) }
@@ -242,6 +243,27 @@ fun PlayerScreen(baseUrl: String, token: String, type: String, id: Int, onBack: 
             val d = result.drawable
             if (d is BitmapDrawable) spriteBitmap = d.bitmap
         } catch (_: Exception) {}
+    }
+
+    // Fetch title for display
+    LaunchedEffect(api, type, id) {
+        try {
+            title = when (type) {
+                "audio" -> api.audioDetail(id).title
+                else -> api.videoDetail(id).title
+            }
+        } catch (_: Exception) {}
+    }
+
+    // Title at top-left
+    title?.let {
+        Text(
+            text = it,
+            color = Color.White,
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .padding(24.dp)
+        )
     }
 
     // Invisible focus holder for "playback mode": while focused, D-pad seeks/plays.
