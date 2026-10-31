@@ -33,14 +33,12 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.painter.ColorPainter
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
-import com.binarygeek119.covelounge.data.MediaKind
 
 @Composable
 fun MediaDetailScreen(
@@ -103,18 +101,6 @@ fun MediaDetailScreen(
                 details?.let { Text(it, color = Color.LightGray, modifier = Modifier.padding(top = 8.dp)) }
                 Button(onClick = onPreview, modifier = Modifier.padding(top = 16.dp)) { Text("Preview") }
                 Button(onClick = { viewModel.like() }, modifier = Modifier.padding(top = 8.dp)) { Text("Like (${likeCount})") }
-                if (viewModel.kind == MediaKind.VIDEO) {
-                    Text("Sprite sheet:", color = Color.White, modifier = Modifier.padding(top = 8.dp))
-                    AsyncImage(
-                        model = "$baseUrl/api/stream/video/${viewModel.id}/sprite?access_token=$token",
-                        contentDescription = "Sprite",
-                        placeholder = ColorPainter(Color(0xFF2A2A3A)),
-                        error = ColorPainter(Color(0xFF3A1A1A)),
-                        modifier = Modifier.fillMaxWidth().height(120.dp).clip(RoundedCornerShape(8.dp)),
-                        contentScale = ContentScale.None
-                    )
-                    Text("Sprite may not be generated yet.", color = Color.Gray, fontSize = 10.sp, modifier = Modifier.padding(top = 4.dp))
-                }
             }
         }
     }

@@ -64,13 +64,20 @@ fun PlayerScreen(baseUrl: String, token: String, type: String, id: Int, onBack: 
     val scope = rememberCoroutineScope()
     val gearFr = remember { FocusRequester() }
     var gearFocused by remember { mutableStateOf(false) }
-    // Start with the gear focused so the remote can open playback settings right away
+
+    // Start with the gear focused; the AndroidView (PlayerView) steals View focus right
+    // after attaching, so retry until focus sticks durably.
     LaunchedEffect(Unit) {
-        repeat(10) {
-            if (runCatching { gearFr.requestFocus() }.isSuccess) return@LaunchedEffect
-            delay(100)
+        repeat(40) {
+            runCatching { gearFr.requestFocus() }
+            delay(250)
+            if (gearFocused) {
+                delay(300)
+                if (gearFocused) return@LaunchedEffect
+            }
         }
     }
+
     BackHandler { if (showGearMenu) showGearMenu = false else onBack() }
 
     val player = remember { ExoPlayer.Builder(context).build() }
@@ -97,8 +104,12 @@ fun PlayerScreen(baseUrl: String, token: String, type: String, id: Int, onBack: 
             .onPreviewKeyEvent { event ->
                 if (event.nativeKeyEvent.action != KeyEvent.ACTION_DOWN) false
                 else when (event.nativeKeyEvent.keyCode) {
-                    KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER ->
-                        if (gearFocused) { showGearMenu = true; true } else false
+                    // OK toggles play/pause; UP is the dedicated "playback settings" key
+                    KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER -> {
+                        if (gearFocused) { showGearMenu = true; true }
+                        else { if (player.isPlaying) player.pause() else player.play(); true }
+                    }
+                    KeyEvent.KEYCODE_DPAD_UP -> { showGearMenu = true; true }
                     KeyEvent.KEYCODE_DPAD_LEFT -> { player.seekBack(); true }
                     KeyEvent.KEYCODE_DPAD_RIGHT -> { player.seekForward(); true }
                     KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE, KeyEvent.KEYCODE_MEDIA_PLAY, KeyEvent.KEYCODE_MEDIA_PAUSE -> {
@@ -112,7 +123,10 @@ fun PlayerScreen(baseUrl: String, token: String, type: String, id: Int, onBack: 
             }
     ) {
         AndroidView(
-            factory = { PlayerView(it).apply { this.player = player } },
+            factory = { PlayerView(it).apply {
+                this.player = player
+                isFocusable = false // keys always flow through the Compose handlers above
+            } },
             modifier = Modifier.fillMaxSize()
         )
         IconButton(
@@ -132,30 +146,39 @@ fun PlayerScreen(baseUrl: String, token: String, type: String, id: Int, onBack: 
     }
 
     if (showGearMenu) {
+        val resolutions = listOf("480p", "720p", "1080p")
+        val options = listOf("Direct (original)") + resolutions
+        val selectedIdx = if (!useTranscode) 0 else 1 + resolutions.indexOf(transcodeResolution)
+        val optionFrs = remember { List(options.size) { FocusRequester() } }
+        // Put remote focus on the currently active quality when the menu opens
+        LaunchedEffect(showGearMenu, selectedIdx) {
+            repeat(20) {
+                if (runCatching { optionFrs[selectedIdx].requestFocus() }.isSuccess) return@LaunchedEffect
+                delay(100)
+            }
+        }
         AlertDialog(
             onDismissRequest = { showGearMenu = false },
             title = { Text("Playback quality") },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Button(
-                        onClick = {
-                            scope.launch { settings.setUseTranscode(false) }
-                            showGearMenu = false
-                        },
-                        border = if (!useTranscode) BorderStroke(2.dp, Color(0xFF2196F3)) else null
-                    ) { Text("Direct (original)") }
-                    listOf("480p", "720p", "1080p").forEach { res ->
-                        val selected = useTranscode && transcodeResolution == res
+                    options.forEachIndexed { i, label ->
+                        val selected = if (i == 0) !useTranscode
+                            else useTranscode && transcodeResolution == resolutions[i - 1]
                         Button(
                             onClick = {
                                 scope.launch {
-                                    settings.setUseTranscode(true)
-                                    settings.setTranscodeResolution(res)
+                                    if (i == 0) settings.setUseTranscode(false)
+                                    else {
+                                        settings.setUseTranscode(true)
+                                        settings.setTranscodeResolution(resolutions[i - 1])
+                                    }
                                 }
                                 showGearMenu = false
                             },
-                            border = if (selected) BorderStroke(2.dp, Color(0xFF2196F3)) else null
-                        ) { Text(res) }
+                            border = if (selected) BorderStroke(2.dp, Color(0xFF2196F3)) else null,
+                            modifier = Modifier.focusRequester(optionFrs[i])
+                        ) { Text(label) }
                     }
                 }
             },
