@@ -1,11 +1,14 @@
 package com.binarygeek119.covelounge.ui.media
 
 import android.net.Uri
+import android.graphics.Bitmap
+import android.graphics.drawable.BitmapDrawable
 import android.view.KeyEvent
 import com.binarygeek119.covelounge.R
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -43,6 +46,10 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.foundation.focusable
 import androidx.compose.ui.graphics.Color
+import androidx.compose.foundation.layout.offset
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -56,6 +63,8 @@ import android.app.Application
 import com.binarygeek119.covelounge.data.ServerStore
 import com.binarygeek119.covelounge.data.SessionRepository
 import com.binarygeek119.covelounge.data.SettingsStore
+import coil.imageLoader
+import coil.request.ImageRequest
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -92,6 +101,10 @@ fun PlayerScreen(baseUrl: String, token: String, type: String, id: Int, onBack: 
     var viewCount by remember { mutableStateOf(0) }
     var position by remember { mutableStateOf(0L) }
     var duration by remember { mutableStateOf(0L) }
+    var spriteBitmap by remember { mutableStateOf<Bitmap?>(null) }
+    var isScrubbing by remember { mutableStateOf(false) }
+    var previewBitmap by remember { mutableStateOf<Bitmap?>(null) }
+    var sliderWidth by remember { mutableStateOf(0) }
 
     // Start with the gear focused; the AndroidView (PlayerView) steals View focus right
     // after attaching, so retry until focus sticks durably.
@@ -211,7 +224,19 @@ fun PlayerScreen(baseUrl: String, token: String, type: String, id: Int, onBack: 
             } },
             modifier = Modifier.fillMaxSize()
         )
-        // Invisible focus holder for "playback mode": while focused, D-pad seeks/plays.
+        // Load sprite sheet for scrubbing preview (videos only)
+    LaunchedEffect(baseUrl, token, id, type) {
+        if (type == "audio") return@LaunchedEffect
+        val url = "$baseUrl/api/stream/video/$id/sprite?access_token=$token"
+        try {
+            val req = ImageRequest.Builder(context).data(url).build()
+            val result = context.imageLoader.execute(req)
+            val d = result.drawable
+            if (d is BitmapDrawable) spriteBitmap = d.bitmap
+        } catch (_: Exception) {}
+    }
+
+    // Invisible focus holder for "playback mode": while focused, D-pad seeks/plays.
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -226,14 +251,47 @@ fun PlayerScreen(baseUrl: String, token: String, type: String, id: Int, onBack: 
                 .fillMaxWidth()
                 .padding(16.dp)
         ) {
-            Slider(
-                value = if (duration > 0) position.toFloat() / duration.toFloat() else 0f,
-                onValueChange = { /* preview */ },
-                onValueChangeFinished = {
-                    if (duration > 0) player.seekTo((position).coerceIn(0L, duration))
-                },
-                modifier = Modifier.fillMaxWidth()
-            )
+            Box(modifier = Modifier.fillMaxWidth().onGloballyPositioned { sliderWidth = it.size.width }) {
+                if (isScrubbing && previewBitmap != null) {
+                    val frac = if (duration > 0) position.toFloat() / duration.toFloat() else 0f
+                    val density = LocalDensity.current
+                    val offsetX = with(density) { (frac * sliderWidth - 40.dp.toPx()).toDp() }
+                    Image(
+                        bitmap = previewBitmap!!.asImageBitmap(),
+                        contentDescription = "preview",
+                        modifier = Modifier
+                            .size(80.dp)
+                            .offset(x = offsetX)
+                            .align(Alignment.TopStart)
+                    )
+                }
+                Slider(
+                    value = if (duration > 0) position.toFloat() / duration.toFloat() else 0f,
+                    onValueChange = { v ->
+                        isScrubbing = true
+                        position = (v * duration).toLong()
+                        val sb = spriteBitmap
+                        if (sb != null) {
+                            val frameCount = minOf(81, maxOf(1, (duration / 1000 / 2).toInt())).coerceAtLeast(1)
+                            val cols = kotlin.math.ceil(kotlin.math.sqrt(frameCount.toDouble())).toInt()
+                            val rows = kotlin.math.ceil(frameCount.toDouble() / cols).toInt()
+                            val intervalMs = duration / frameCount
+                            val idx = minOf(frameCount - 1, (position / intervalMs).toInt().coerceAtLeast(0))
+                            val tileW = sb.width / cols
+                            val tileH = sb.height / rows
+                            val col = idx % cols
+                            val row = idx / cols
+                            previewBitmap = Bitmap.createBitmap(sb, col * tileW, row * tileH, tileW, tileH)
+                        }
+                    },
+                    onValueChangeFinished = {
+                        if (duration > 0) player.seekTo(position.coerceIn(0L, duration))
+                        isScrubbing = false
+                        previewBitmap = null
+                    },
+                    modifier = Modifier.fillMaxWidth().padding(top = if (isScrubbing && previewBitmap != null) 88.dp else 0.dp)
+                )
+            }
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
