@@ -1,6 +1,7 @@
 package com.binarygeek119.covelounge.ui.media
 
 import android.net.Uri
+import android.util.Log
 import android.graphics.Bitmap
 import android.graphics.drawable.BitmapDrawable
 import android.view.KeyEvent
@@ -84,10 +85,11 @@ fun PlayerScreen(baseUrl: String, token: String, type: String, id: Int, onBack: 
     val ratingsOnExit by settings.ratingsOnExit.collectAsState(initial = false)
 
 
-    // Always use transcode endpoint for video - produces fragmented MP4 with moov at start
-    // This allows ExoPlayer to seek properly (moov atom is at beginning of file)
+    // Use transcode endpoint with ?start= parameter for reliable seeking
+    var startSeconds by remember { mutableStateOf(0.0) }
+    val startParam = if (startSeconds > 0) "&start=$startSeconds" else ""
     val url = when (type) {
-        "video" -> "$baseUrl/api/stream/video/$id/transcode?resolution=$transcodeResolution&access_token=$token"
+        "video" -> "$baseUrl/api/stream/video/$id/transcode?resolution=$transcodeResolution&access_token=$token$startParam"
         "preview" -> "$baseUrl/api/stream/video/$id/preview?access_token=$token"
         else -> "$baseUrl/api/audios/$id/stream?access_token=$token"
     }
@@ -184,7 +186,7 @@ fun PlayerScreen(baseUrl: String, token: String, type: String, id: Int, onBack: 
             val st = player.playbackState
             if (st == Player.STATE_READY || st == Player.STATE_BUFFERING) {
                 savedPosition = player.currentPosition
-                if (!isScrubbing && player.playbackState == Player.STATE_READY) position = player.currentPosition
+                if (!isScrubbing && player.playbackState == Player.STATE_READY) position = (startSeconds * 1000).toLong() + player.currentPosition
                 val d = player.duration
                 if (d > 0) duration = d
             }
@@ -195,10 +197,12 @@ fun PlayerScreen(baseUrl: String, token: String, type: String, id: Int, onBack: 
         }
     }
     LaunchedEffect(url) {
+        Log.d("SeekFix", "Re-preparing player: url=$url, startSeconds=$startSeconds")
         player.setMediaItem(MediaItem.fromUri(Uri.parse(url)))
-        if (savedPosition > 0) player.seekTo(savedPosition)
         player.prepare()
         player.playWhenReady = true
+        // Reset savedPosition when using start-based seek
+        if (startSeconds > 0) savedPosition = 0L
     }
 
     Box(
@@ -233,13 +237,20 @@ fun PlayerScreen(baseUrl: String, token: String, type: String, id: Int, onBack: 
                         } else false
                     }
                     KeyEvent.KEYCODE_DPAD_LEFT -> {
-                        if (playbackFocused || sliderFocused) { player.seekBack(); true }
-                        else false
+                        if (playbackFocused || sliderFocused) {
+                            val newPos = (position - 15000).coerceAtLeast(0L)
+                            Log.d("SeekFix", "LEFT seek to $newPos ms")
+                            startSeconds = newPos / 1000.0
+                            true
+                        } else false
                     }
                     KeyEvent.KEYCODE_DPAD_RIGHT -> {
-                        if (playbackFocused) { player.seekForward(); true }
-                        else if (sliderFocused) { player.seekForward(); true }
-                        else false
+                        if (playbackFocused || sliderFocused) {
+                            val newPos = (position + 15000).coerceAtMost(duration)
+                            Log.d("SeekFix", "RIGHT seek to $newPos ms")
+                            startSeconds = newPos / 1000.0
+                            true
+                        } else false
                     }
                     KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE, KeyEvent.KEYCODE_MEDIA_PLAY, KeyEvent.KEYCODE_MEDIA_PAUSE -> {
                         if (player.isPlaying) player.pause() else player.play()
@@ -380,9 +391,10 @@ fun PlayerScreen(baseUrl: String, token: String, type: String, id: Int, onBack: 
                     onValueChangeFinished = {
                         isScrubbing = false
                         previewBitmap = null
-                        // Simple direct seek - works because transcode produces fragmented MP4 with moov at start
                         if (duration > 0) {
-                            player.seekTo(position.coerceIn(0L, duration))
+                            val targetSeconds = position / 1000.0
+                            Log.d("SeekFix", "Slider seek to $position ms ($targetSeconds s)")
+                            startSeconds = targetSeconds
                         }
                     },
                     modifier = Modifier.fillMaxWidth().focusRequester(sliderFr).onFocusChanged { sliderFocused = it.isFocused }.padding(top = if (isScrubbing && previewBitmap != null) 88.dp else 0.dp)
