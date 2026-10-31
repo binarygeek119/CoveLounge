@@ -88,6 +88,18 @@ fun HomeScreen(
             }
         }
 
+        // Vertical selector area
+        val verticalPagerState = rememberPagerState(pageCount = { if (continueWatching.isNotEmpty()) 5 else 4 })
+        val scope = rememberCoroutineScope()
+        val rows = buildList {
+            if (continueWatching.isNotEmpty()) add(Triple("Continue Watching", continueWatching, MediaKind.VIDEO))
+            add(Triple("Videos", recentVideos, MediaKind.VIDEO))
+            add(Triple("Audios", recentAudios, MediaKind.AUDIO))
+            add(Triple("Images", recentImages, MediaKind.IMAGE))
+            add(Triple("Galleries", recentGalleries, MediaKind.GALLERY))
+        }
+        val focusRequesters = remember { List(rows.size) { FocusRequester() } }
+
         // Spotlight bar (fills top, with logo/settings overlay)
         Box(modifier = Modifier.fillMaxWidth()) {
             if (screenshots.isEmpty()) {
@@ -97,6 +109,10 @@ fun HomeScreen(
                     items = screenshots,
                     onOpen = { card -> onOpenItem(card.kind, card.id) },
                     onUp = { runCatching { searchFr.requestFocus() } },
+                    onDown = {
+                        val p = verticalPagerState.currentPage
+                        focusRequesters.getOrNull(p)?.let { fr -> runCatching { fr.requestFocus() } }
+                    },
                     focusRequester = coverFr,
                     previewMode = previewMode,
                     previewUrlProvider = { card ->
@@ -128,6 +144,8 @@ fun HomeScreen(
                                 if (event.nativeKeyEvent.action == android.view.KeyEvent.ACTION_DOWN) {
                                     when (event.nativeKeyEvent.keyCode) {
                                         android.view.KeyEvent.KEYCODE_DPAD_RIGHT -> { settingsFr.requestFocus(); true }
+                                        // Swallow direction keys so focus can't escape this area; only DOWN returns to the spotlight
+                                        android.view.KeyEvent.KEYCODE_DPAD_LEFT, android.view.KeyEvent.KEYCODE_DPAD_UP -> true
                                         android.view.KeyEvent.KEYCODE_DPAD_DOWN -> { runCatching { coverFr.requestFocus() }; true }
                                         else -> false
                                     }
@@ -143,6 +161,8 @@ fun HomeScreen(
                                 if (event.nativeKeyEvent.action == android.view.KeyEvent.ACTION_DOWN) {
                                     when (event.nativeKeyEvent.keyCode) {
                                         android.view.KeyEvent.KEYCODE_DPAD_LEFT -> { searchFr.requestFocus(); true }
+                                        // Swallow direction keys so focus can't escape this area; only DOWN returns to the spotlight
+                                        android.view.KeyEvent.KEYCODE_DPAD_RIGHT, android.view.KeyEvent.KEYCODE_DPAD_UP -> true
                                         android.view.KeyEvent.KEYCODE_DPAD_DOWN -> { runCatching { coverFr.requestFocus() }; true }
                                         else -> false
                                     }
@@ -154,17 +174,7 @@ fun HomeScreen(
             }
         }
 
-        // Vertical selector area
-        val verticalPagerState = rememberPagerState(pageCount = { if (continueWatching.isNotEmpty()) 5 else 4 })
-        val scope = rememberCoroutineScope()
-        val rows = buildList {
-            if (continueWatching.isNotEmpty()) add(Triple("Continue Watching", continueWatching, MediaKind.VIDEO))
-            add(Triple("Videos", recentVideos, MediaKind.VIDEO))
-            add(Triple("Audios", recentAudios, MediaKind.AUDIO))
-            add(Triple("Images", recentImages, MediaKind.IMAGE))
-            add(Triple("Galleries", recentGalleries, MediaKind.GALLERY))
-        }
-        val focusRequesters = remember { List(rows.size) { FocusRequester() } }
+        // Vertical pager rows
         Box(
             modifier = Modifier
                 .fillMaxWidth()

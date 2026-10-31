@@ -65,6 +65,7 @@ fun CoverFlow(
     onOpen: (MediaCard) -> Unit,
     onFocus: () -> Unit = {},
     onUp: () -> Unit = {},
+    onDown: () -> Unit = {},
     focusRequester: FocusRequester = remember { FocusRequester() },
     previewMode: String = "Off",
     previewUrlProvider: (MediaCard) -> String? = { null },
@@ -112,6 +113,7 @@ fun CoverFlow(
         if (event.nativeKeyEvent.action == KeyEvent.ACTION_DOWN) {
             when (event.nativeKeyEvent.keyCode) {
                 KeyEvent.KEYCODE_DPAD_UP -> { onUp(); true }
+                KeyEvent.KEYCODE_DPAD_DOWN -> { onDown(); true }
                 // Positions: 0 = left arrow, 1 = center item, 2 = right arrow
                 KeyEvent.KEYCODE_DPAD_LEFT -> when (focusedPosition) {
                     1 -> { runCatching { leftArrowFr.requestFocus() }; true }
