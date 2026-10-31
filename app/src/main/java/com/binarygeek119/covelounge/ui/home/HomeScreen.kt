@@ -78,9 +78,13 @@ fun HomeScreen(
     val coverFr = remember { FocusRequester() }
 
     // Initial focus: spotlight center (or Search if no screenshots), so the remote works right away
-    LaunchedEffect(screenshots) {
-        runCatching {
-            if (screenshots.isNotEmpty()) coverFr.requestFocus() else searchFr.requestFocus()
+    LaunchedEffect(screenshots.isNotEmpty()) {
+        repeat(10) {
+            val ok = runCatching {
+                if (screenshots.isNotEmpty()) coverFr.requestFocus() else searchFr.requestFocus()
+            }.isSuccess
+            if (ok) return@LaunchedEffect
+            kotlinx.coroutines.delay(100)
         }
     }
 
