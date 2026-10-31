@@ -87,7 +87,7 @@ fun PlayerScreen(baseUrl: String, token: String, type: String, id: Int, onBack: 
         "video" -> if (useTranscode)
             "$baseUrl/api/stream/video/$id/transcode?resolution=$transcodeResolution&access_token=$token"
         else
-            "$baseUrl/api/stream/video/$id/hls/master.m3u8?access_token=$token"
+            "$baseUrl/api/stream/video/$id?access_token=$token"
         "preview" -> "$baseUrl/api/stream/video/$id/preview?access_token=$token"
         else -> "$baseUrl/api/audios/$id/stream?access_token=$token"
     }
