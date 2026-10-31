@@ -1,6 +1,7 @@
 package com.binarygeek119.covelounge.ui.settings
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -22,6 +23,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -90,9 +93,9 @@ fun SettingsScreen(onBack: () -> Unit, onLogout: () -> Unit = {}) {
         when (category) {
             "main" -> {
                 Text("Settings")
-                Text("Account", color = Color.White, modifier = Modifier.clickable { category = "account" })
-                Text("Playback", color = Color.White, modifier = Modifier.clickable { category = "playback" })
-                Text("About", color = Color.White, modifier = Modifier.clickable { category = "about" })
+                MenuRow("Account") { category = "account" }
+                MenuRow("Playback") { category = "playback" }
+                MenuRow("About") { category = "about" }
                 Button(onClick = onBack) { Text("Back") }
             }
             "account" -> {
@@ -198,4 +201,20 @@ fun SettingsScreen(onBack: () -> Unit, onLogout: () -> Unit = {}) {
             }
         )
     }
+}
+
+
+@Composable
+private fun MenuRow(text: String, onClick: () -> Unit) {
+    var focused by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
+    androidx.compose.material3.Text(
+        text = text,
+        color = if (focused) Color(0xFF2196F3) else Color.White,
+        fontWeight = if (focused) FontWeight.Bold else FontWeight.Normal,
+        modifier = Modifier
+            .onFocusChanged { focused = it.isFocused }
+            .focusable()
+            .clickable { onClick() }
+            .padding(4.dp)
+    )
 }
