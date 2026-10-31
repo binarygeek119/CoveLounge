@@ -36,7 +36,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.focus.onFocusChanged
@@ -62,6 +64,8 @@ fun CoverFlow(
     items: List<MediaCard>,
     onOpen: (MediaCard) -> Unit,
     onFocus: () -> Unit = {},
+    onUp: () -> Unit = {},
+    focusRequester: FocusRequester = remember { FocusRequester() },
     previewMode: String = "Off",
     previewUrlProvider: (MediaCard) -> String? = { null },
     intervalSeconds: Int = 10,
@@ -103,7 +107,10 @@ fun CoverFlow(
         player.playWhenReady = true
     }
     Box(modifier = modifier.height(260.dp).fillMaxWidth().onPreviewKeyEvent { event ->
-        if (event.nativeKeyEvent.action == KeyEvent.ACTION_DOWN && event.nativeKeyEvent.keyCode == KeyEvent.KEYCODE_DPAD_UP) true else false
+        if (event.nativeKeyEvent.action == KeyEvent.ACTION_DOWN && event.nativeKeyEvent.keyCode == KeyEvent.KEYCODE_DPAD_UP) {
+            onUp()
+            true
+        } else false
     }) {
         HorizontalPager(state = pagerState, userScrollEnabled = false, modifier = Modifier.fillMaxSize()) { page ->
             val item = items[page]
@@ -112,6 +119,7 @@ fun CoverFlow(
                     factory = { PlayerView(it).apply { this.player = player; useController = false } },
                     modifier = Modifier
                         .fillMaxSize()
+                        .then(if (page == pagerState.currentPage) Modifier.focusRequester(focusRequester) else Modifier)
                         .alpha(if (focusedPosition == 1) 1f else 0f)
                         .onFocusChanged { if (it.isFocused) { focusedPosition = 1; onFocus() } }
                         .clickable { onOpen(item) }
@@ -123,6 +131,7 @@ fun CoverFlow(
                     modifier = Modifier
                         .fillMaxSize()
                         .clip(RoundedCornerShape(12.dp))
+                        .then(if (page == pagerState.currentPage) Modifier.focusRequester(focusRequester) else Modifier)
                         .alpha(if (focusedPosition == 1) 1f else 0f)
                         .onFocusChanged { if (it.isFocused) { focusedPosition = 1; onFocus() } }
                         .clickable { if (page == pagerState.currentPage) onOpen(item) },

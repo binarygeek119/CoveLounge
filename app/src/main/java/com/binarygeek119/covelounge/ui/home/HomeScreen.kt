@@ -10,6 +10,8 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.focusable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -35,6 +37,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -70,6 +73,9 @@ fun HomeScreen(
     val screenshotInterval by settingsStore.screenshotInterval.collectAsState(initial = 10)
 
     var showSettings by remember { mutableStateOf(false) }
+    val searchFr = remember { FocusRequester() }
+    val settingsFr = remember { FocusRequester() }
+    val coverFr = remember { FocusRequester() }
 
     Column(modifier = Modifier.fillMaxSize().background(Color.Black)) {
         if (isLoading) {
@@ -90,6 +96,8 @@ fun HomeScreen(
                 CoverFlow(
                     items = screenshots,
                     onOpen = { card -> onOpenItem(card.kind, card.id) },
+                    onUp = { runCatching { searchFr.requestFocus() } },
+                    focusRequester = coverFr,
                     previewMode = previewMode,
                     previewUrlProvider = { card ->
                         if (card.kind == MediaKind.VIDEO) "$baseUrl/api/stream/video/${card.id}/preview?access_token=$token" else null
@@ -112,15 +120,35 @@ fun HomeScreen(
                     contentScale = ContentScale.Fit
                 )
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text(
+                    TopButton(
                         text = "Search",
-                        color = Color.White,
-                        modifier = Modifier.clickable { onSearchClick() }
+                        modifier = Modifier
+                            .focusRequester(searchFr)
+                            .onPreviewKeyEvent { event ->
+                                if (event.nativeKeyEvent.action == android.view.KeyEvent.ACTION_DOWN) {
+                                    when (event.nativeKeyEvent.keyCode) {
+                                        android.view.KeyEvent.KEYCODE_DPAD_RIGHT -> { settingsFr.requestFocus(); true }
+                                        android.view.KeyEvent.KEYCODE_DPAD_DOWN -> { runCatching { coverFr.requestFocus() }; true }
+                                        else -> false
+                                    }
+                                } else false
+                            },
+                        onClick = onSearchClick
                     )
-                    Text(
+                    TopButton(
                         text = "Settings",
-                        color = Color.White,
-                        modifier = Modifier.clickable { onSettingsClick() }
+                        modifier = Modifier
+                            .focusRequester(settingsFr)
+                            .onPreviewKeyEvent { event ->
+                                if (event.nativeKeyEvent.action == android.view.KeyEvent.ACTION_DOWN) {
+                                    when (event.nativeKeyEvent.keyCode) {
+                                        android.view.KeyEvent.KEYCODE_DPAD_LEFT -> { searchFr.requestFocus(); true }
+                                        android.view.KeyEvent.KEYCODE_DPAD_DOWN -> { runCatching { coverFr.requestFocus() }; true }
+                                        else -> false
+                                    }
+                                } else false
+                            },
+                        onClick = onSettingsClick
                     )
                 }
             }
@@ -200,7 +228,7 @@ fun HomeScreen(
                     .align(Alignment.CenterStart)
                     .padding(start = 16.dp)
                     .size(150.dp, 100.dp)
-                    .border(4.dp, Color.White, RoundedCornerShape(12.dp))
+                    .border(4.dp, Color(0xFF2196F3), RoundedCornerShape(12.dp))
             )
         }
     }
@@ -215,4 +243,26 @@ fun HomeScreen(
             }
         )
     }
+}
+
+@Composable
+private fun TopButton(
+    text: String,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    var focused by remember { mutableStateOf(false) }
+    Text(
+        text = text,
+        color = if (focused) Color(0xFF2196F3) else Color.White,
+        fontWeight = if (focused) FontWeight.Bold else FontWeight.Normal,
+        modifier = modifier
+            .onFocusChanged { focused = it.isFocused }
+            .focusable()
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null
+            ) { onClick() }
+            .padding(4.dp)
+    )
 }
