@@ -24,6 +24,9 @@ class MediaDetailViewModel(app: Application, val kind: MediaKind, val id: Int) :
     private val _likeCount = MutableStateFlow(0)
     val likeCount: StateFlow<Int> = _likeCount
 
+    private val _performers = MutableStateFlow<List<com.binarygeek119.covelounge.data.network.PerformerSummaryDto>>(emptyList())
+    val performers: StateFlow<List<com.binarygeek119.covelounge.data.network.PerformerSummaryDto>> = _performers
+
     private val _isFavorite = MutableStateFlow(false)
     val isFavorite: StateFlow<Boolean> = _isFavorite
 
@@ -109,6 +112,7 @@ class MediaDetailViewModel(app: Application, val kind: MediaKind, val id: Int) :
                             val url = if (p.startsWith("http")) p else "$baseUrl${if (p.startsWith("/")) p else "/$p"}"
                             if (url.contains("access_token=")) url else "$url${if (url.contains("?")) "&" else "?"}access_token=$token"
                         } ?: "$baseUrl/api/stream/video/$id/screenshot?access_token=$token"
+                        _performers.value = dto.performers ?: emptyList()
                     }
                     MediaKind.AUDIO -> {
                         val dto = a.audioDetail(id)

@@ -3,9 +3,11 @@ package com.binarygeek119.covelounge.ui.detail
 import android.view.KeyEvent
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -18,7 +20,6 @@ import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.ThumbUp
 import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -39,9 +40,11 @@ import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.res.painterResource
 import coil.compose.AsyncImage
 import com.binarygeek119.covelounge.R
+import com.binarygeek119.covelounge.data.network.PerformerSummaryDto
 
 @Composable
 fun MediaDetailScreen(
@@ -57,6 +60,7 @@ fun MediaDetailScreen(
     val posterUrl by viewModel.posterUrl.collectAsState()
     val likeCount by viewModel.likeCount.collectAsState()
     val isFavorite by viewModel.isFavorite.collectAsState()
+    val performers by viewModel.performers.collectAsState()
     val playFr = remember { FocusRequester() }
     var playFocused by remember { mutableStateOf(false) }
     val previewFr = remember { FocusRequester() }
@@ -65,6 +69,9 @@ fun MediaDetailScreen(
     var likeFocused by remember { mutableStateOf(false) }
     val heartFr = remember { FocusRequester() }
     var heartFocused by remember { mutableStateOf(false) }
+    val performersFr = remember { FocusRequester() }
+    var performersFocused by remember { mutableStateOf(false) }
+    var performerOffset by remember { mutableStateOf(0) }
     // Start remote focus on the play control so the media item is selectable right away
     LaunchedEffect(Unit) {
         repeat(10) {
@@ -80,10 +87,8 @@ fun MediaDetailScreen(
                 AsyncImage(model = it, contentDescription = title, modifier = Modifier.weight(1f).fillMaxSize().clip(RoundedCornerShape(8.dp)), contentScale = ContentScale.Crop)
             }
             Column(modifier = Modifier.weight(1f).padding(start = 16.dp)) {
-                Text(title ?: "Untitled", color = Color.White, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 8.dp))
-                details?.let { Text(it, color = Color.LightGray, modifier = Modifier.padding(top = 8.dp)) }
-                // All action buttons in one row
-                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 16.dp)) {
+                // Button row
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     // Play
                     Box(
                         modifier = Modifier
@@ -184,11 +189,62 @@ fun MediaDetailScreen(
                         Icon(
                             Icons.Filled.Favorite,
                             contentDescription = "Favorite",
-                            tint = if (isFavorite) Color(0xFFFF4081) else Color.White,
+                            tint = if (heartFocused) Color(0xFF2196F3) else if (isFavorite) Color(0xFFFF4081) else Color.White,
                             modifier = Modifier.size(32.dp)
                         )
                     }
                 }
+                // Performers row (2 visible, L/R scrolls)
+                if (performers.isNotEmpty()) {
+                    val visibleCount = 2
+                    val maxOffset = (performers.size - visibleCount).coerceAtLeast(0)
+                    val shown = performers.drop(performerOffset).take(visibleCount)
+                    Box(
+                        modifier = Modifier
+                            .padding(top = 12.dp)
+                            .fillMaxWidth()
+                            .focusRequester(performersFr)
+                            .onFocusChanged { performersFocused = it.isFocused }
+                            .onPreviewKeyEvent { event ->
+                                if (event.nativeKeyEvent.action == KeyEvent.ACTION_DOWN) {
+                                    when (event.nativeKeyEvent.keyCode) {
+                                        KeyEvent.KEYCODE_DPAD_LEFT -> {
+                                            if (performerOffset > 0) performerOffset -= 1
+                                            true
+                                        }
+                                        KeyEvent.KEYCODE_DPAD_RIGHT -> {
+                                            if (performerOffset < maxOffset) performerOffset += 1
+                                            true
+                                        }
+                                        else -> false
+                                    }
+                                } else false
+                            }
+                            .background(if (performersFocused) Color(0x332196F3) else Color.Transparent, RoundedCornerShape(8.dp))
+                            .focusable()
+                            .padding(4.dp)
+                    ) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            shown.forEach { perf ->
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    AsyncImage(
+                                        model = "$baseUrl/api/performers/${perf.id}/image?max=128&access_token=$token",
+                                        contentDescription = perf.name,
+                                        modifier = Modifier
+                                            .size(72.dp)
+                                            .clip(RoundedCornerShape(8.dp)),
+                                        contentScale = ContentScale.Crop,
+                                        alignment = Alignment.TopCenter
+                                    )
+                                    Text(perf.name ?: "", color = Color.White, fontSize = 10.sp, maxLines = 1)
+                                }
+                            }
+                        }
+                    }
+                }
+                // Metadata below performers
+                Text(title ?: "Untitled", color = Color.White, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 12.dp))
+                details?.let { Text(it, color = Color.LightGray, modifier = Modifier.padding(top = 8.dp)) }
             }
         }
     }
