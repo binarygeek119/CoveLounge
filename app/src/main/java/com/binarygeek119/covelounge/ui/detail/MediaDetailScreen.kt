@@ -16,6 +16,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -55,6 +56,8 @@ fun MediaDetailScreen(
     val likeCount by viewModel.likeCount.collectAsState()
     val playFr = remember { FocusRequester() }
     var playFocused by remember { mutableStateOf(false) }
+    val previewFr = remember { FocusRequester() }
+    var previewFocused by remember { mutableStateOf(false) }
     // Start remote focus on the play control so the media item is selectable right away
     LaunchedEffect(Unit) {
         repeat(10) {
@@ -99,7 +102,31 @@ fun MediaDetailScreen(
                 }
                 Text(title ?: "Untitled", color = Color.White, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 8.dp))
                 details?.let { Text(it, color = Color.LightGray, modifier = Modifier.padding(top = 8.dp)) }
-                Button(onClick = onPreview, modifier = Modifier.padding(top = 16.dp)) { Text("Preview") }
+                Box(
+                    modifier = Modifier
+                        .padding(top = 16.dp)
+                        .focusRequester(previewFr)
+                        .onFocusChanged { previewFocused = it.isFocused }
+                        .onPreviewKeyEvent { event ->
+                            if (event.nativeKeyEvent.action == KeyEvent.ACTION_DOWN) {
+                                when (event.nativeKeyEvent.keyCode) {
+                                    KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER -> { onPreview(); true }
+                                    else -> false
+                                }
+                            } else false
+                        }
+                        .background(if (previewFocused) Color(0xFF2196F3) else Color(0x33FFFFFF), CircleShape)
+                        .clickable { onPreview() }
+                        .padding(12.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        Icons.Filled.Visibility,
+                        contentDescription = "Preview",
+                        tint = Color.White,
+                        modifier = Modifier.size(32.dp)
+                    )
+                }
                 Button(onClick = { viewModel.like() }, modifier = Modifier.padding(top = 8.dp)) { Text("Like (${likeCount})") }
             }
         }
