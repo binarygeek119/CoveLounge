@@ -37,6 +37,9 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
     private val _recentGalleries = MutableStateFlow<List<MediaCard>>(emptyList())
     val recentGalleries: StateFlow<List<MediaCard>> = _recentGalleries
 
+    private val _recentPerformers = MutableStateFlow<List<MediaCard>>(emptyList())
+    val recentPerformers: StateFlow<List<MediaCard>> = _recentPerformers
+
     private val _continueWatching = MutableStateFlow<List<MediaCard>>(emptyList())
     val continueWatching: StateFlow<List<MediaCard>> = _continueWatching
 
@@ -118,6 +121,15 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
                 val res = a.galleries(page = 1, perPage = 15, sort = "created_at", direction = "desc")
                 _recentGalleries.value = res.items.map { g ->
                     MediaCard(g.id, g.title, "$baseUrl/api/galleries/${g.id}/cover?access_token=$token", MediaKind.GALLERY)
+                }
+            } catch (e: Exception) { _error.value = e.message ?: "Failed to load media" }
+            try {
+                val res = a.performers(page = 1, perPage = 15, sort = "created_at", direction = "desc")
+                _recentPerformers.value = res.items.map { p ->
+                    val path = p.imagePath ?: "/api/performers/${p.id}/image?max=256"
+                    val url = if (path.startsWith("http")) path else "$baseUrl${if (path.startsWith("/")) path else "/$path"}"
+                    val authUrl = if (url.contains("access_token=")) url else "$url${if (url.contains("?")) "&" else "?"}access_token=$token"
+                    MediaCard(p.id, p.name ?: "Performer", authUrl, MediaKind.IMAGE)
                 }
             } catch (e: Exception) { _error.value = e.message ?: "Failed to load media" }
         }

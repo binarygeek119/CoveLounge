@@ -162,6 +162,14 @@ interface CoveApi {
         @retrofit2.http.Path("id") id: Int,
         @Body body: EntityFavoriteDto
     ): EntityEngagementDto
+
+    @GET("performers")
+    suspend fun performers(
+        @Query("page") page: Int = 1,
+        @Query("perPage") perPage: Int = 30,
+        @Query("sort") sort: String? = null,
+        @Query("direction") direction: String? = null
+    ): PaginatedResponse<PerformerDto>
 }
 
 @Serializable
@@ -173,3 +181,10 @@ data class EntityEngagementDto(
 
 @Serializable
 data class EntityFavoriteDto(val isFavorite: Boolean)
+
+@Serializable
+data class PerformerDto(
+    val id: Int = 0,
+    val name: String? = null,
+    val imagePath: String? = null
+)

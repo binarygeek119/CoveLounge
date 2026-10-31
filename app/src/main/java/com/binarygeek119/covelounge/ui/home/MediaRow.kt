@@ -59,9 +59,10 @@ fun MediaRow(
     onItemClick: (MediaCard) -> Unit,
     onRowFocused: (Int) -> Unit = {},
     focusRequester: FocusRequester = remember { FocusRequester() },
+    showFolder: Boolean = true,
     modifier: Modifier = Modifier
 ) {
-    val total = (items.size + 1).coerceAtLeast(1) // folder + items
+    val total = if (showFolder) (items.size + 1).coerceAtLeast(1) else items.size.coerceAtLeast(1) // folder + items
     val pagerState = rememberPagerState(pageCount = { Int.MAX_VALUE })
     var sel by remember { mutableStateOf(0) }
     var lap by remember { mutableStateOf(0) }
@@ -115,10 +116,10 @@ fun MediaRow(
             ) { page ->
                 val idx = ((page % total) + total) % total
                 Box(modifier = Modifier.fillMaxSize()) {
-                    if (idx == 0) {
+                    if (showFolder && idx == 0) {
                         FolderCard()
                     } else {
-                        ItemCard(item = items[idx - 1])
+                        ItemCard(item = items[if (showFolder) idx - 1 else idx])
                     }
                 }
             }

@@ -64,6 +64,7 @@ fun HomeScreen(
     val recentAudios by viewModel.recentAudios.collectAsState()
     val recentImages by viewModel.recentImages.collectAsState()
     val recentGalleries by viewModel.recentGalleries.collectAsState()
+    val recentPerformers by viewModel.recentPerformers.collectAsState()
     val continueWatching by viewModel.continueWatching.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val error by viewModel.error.collectAsState()
@@ -100,7 +101,7 @@ fun HomeScreen(
         }
 
         // Vertical selector area
-        val verticalPagerState = rememberPagerState(pageCount = { if (continueWatching.isNotEmpty()) 5 else 4 })
+        val verticalPagerState = rememberPagerState(pageCount = { if (continueWatching.isNotEmpty()) 6 else 5 })
         val scope = rememberCoroutineScope()
         val rows = buildList {
             if (continueWatching.isNotEmpty()) add(Triple("Continue Watching", continueWatching, MediaKind.VIDEO))
@@ -108,6 +109,7 @@ fun HomeScreen(
             add(Triple("Audios", recentAudios, MediaKind.AUDIO))
             add(Triple("Images", recentImages, MediaKind.IMAGE))
             add(Triple("Galleries", recentGalleries, MediaKind.GALLERY))
+            if (recentPerformers.isNotEmpty()) add(Triple("Performers", recentPerformers, MediaKind.IMAGE))
         }
         val focusRequesters = remember { List(rows.size) { FocusRequester() } }
 
@@ -231,11 +233,14 @@ fun HomeScreen(
                 modifier = Modifier.fillMaxSize()
             ) { page ->
                 val (title, items, kind) = rows[page]
+                val isPerformers = title == "Performers"
                 MediaRow(
                     title = title,
                     items = items,
                     focusRequester = focusRequesters.getOrElse(page) { FocusRequester() },
+                    showFolder = !isPerformers,
                     onFolderClick = {
+                        if (isPerformers) return@MediaRow
                         when (kind) {
                             MediaKind.VIDEO -> onOpenFolder(MediaKind.VIDEO)
                             MediaKind.AUDIO -> onOpenFolder(MediaKind.AUDIO)
@@ -243,7 +248,7 @@ fun HomeScreen(
                             MediaKind.GALLERY -> onOpenFolder(MediaKind.GALLERY)
                         }
                     },
-                    onItemClick = { card -> onOpenItem(kind, card.id) }
+                    onItemClick = { card -> if (!isPerformers) onOpenItem(kind, card.id) }
                 )
             }
         }
