@@ -102,7 +102,7 @@ fun MediaRow(
                     .align(Alignment.CenterStart)
                     .padding(start = 16.dp)
                     .size(160.dp, 110.dp)
-                    .border(4.dp, Color.White, RoundedCornerShape(12.dp))
+                    .border(4.dp, Color(0xFF2196F3), RoundedCornerShape(12.dp))
             )
         }
         // dots
