@@ -351,15 +351,6 @@ fun PlayerScreen(baseUrl: String, token: String, type: String, id: Int, onBack: 
                         tint = if (thumbFocused) Color(0xFF2196F3) else Color.White
                     )
                 }
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_fa_eye_regular),
-                        contentDescription = "Views",
-                        tint = Color.White,
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Text(" $viewCount", color = Color.White)
-                }
                 IconButton(
                     onClick = { showGearMenu = true },
                     modifier = Modifier
@@ -371,6 +362,15 @@ fun PlayerScreen(baseUrl: String, token: String, type: String, id: Int, onBack: 
                         contentDescription = "Playback settings",
                         tint = if (gearFocused) Color(0xFF2196F3) else Color.White
                     )
+                }
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_fa_eye_regular),
+                        contentDescription = "Views",
+                        tint = Color.White,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Text(" $viewCount", color = Color.White)
                 }
             }
         }
