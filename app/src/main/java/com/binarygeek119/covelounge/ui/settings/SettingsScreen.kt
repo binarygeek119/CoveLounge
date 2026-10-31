@@ -29,6 +29,7 @@ import com.binarygeek119.covelounge.data.ServerStore
 import com.binarygeek119.covelounge.data.SessionRepository
 import com.binarygeek119.covelounge.BuildConfig
 import com.binarygeek119.covelounge.data.SettingsStore
+import com.binarygeek119.covelounge.util.ImageCache
 import com.binarygeek119.covelounge.util.UpdateChecker
 import kotlinx.coroutines.launch
 
@@ -95,6 +96,16 @@ fun SettingsScreen(onBack: () -> Unit, onLogout: () -> Unit = {}) {
                 Text("Account")
                 accountName?.let { Text("Account: $it") }
                 if (permissions.isNotEmpty()) Text("Permissions: ${permissions.joinToString(", ")}")
+                var cacheBytes by remember { mutableStateOf<Long?>(null) }
+                LaunchedEffect(Unit) { cacheBytes = ImageCache.sizeBytes(context) }
+                val cacheMb = cacheBytes?.let { String.format("%.1f", it / (1024.0 * 1024.0)) }
+                Button(onClick = {
+                    scope.launch {
+                        cacheBytes = 0L
+                        ImageCache.clear(context)
+                        cacheBytes = ImageCache.sizeBytes(context)
+                    }
+                }) { Text(if (cacheMb != null) "Clear image cache ($cacheMb MB)" else "Clear image cache") }
                 Button(onClick = onLogout) { Text("Log out") }
                 Button(onClick = { category = "main" }) { Text("Back") }
             }
