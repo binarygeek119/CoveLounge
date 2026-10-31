@@ -80,6 +80,8 @@ fun CoverFlow(
     val pagerState = rememberPagerState(pageCount = { items.size })
     val scope = rememberCoroutineScope()
     var focusedPosition by remember { mutableStateOf(1) }
+    val leftArrowFr = remember { FocusRequester() }
+    val rightArrowFr = remember { FocusRequester() }
     val context = LocalContext.current
     val player = remember { ExoPlayer.Builder(context).build() }
     DisposableEffect(Unit) { onDispose { player.release() } }
@@ -107,9 +109,22 @@ fun CoverFlow(
         player.playWhenReady = true
     }
     Box(modifier = modifier.height(260.dp).fillMaxWidth().onPreviewKeyEvent { event ->
-        if (event.nativeKeyEvent.action == KeyEvent.ACTION_DOWN && event.nativeKeyEvent.keyCode == KeyEvent.KEYCODE_DPAD_UP) {
-            onUp()
-            true
+        if (event.nativeKeyEvent.action == KeyEvent.ACTION_DOWN) {
+            when (event.nativeKeyEvent.keyCode) {
+                KeyEvent.KEYCODE_DPAD_UP -> { onUp(); true }
+                // Positions: 0 = left arrow, 1 = center item, 2 = right arrow
+                KeyEvent.KEYCODE_DPAD_LEFT -> when (focusedPosition) {
+                    1 -> { runCatching { leftArrowFr.requestFocus() }; true }
+                    2 -> { runCatching { focusRequester.requestFocus() }; true }
+                    else -> false
+                }
+                KeyEvent.KEYCODE_DPAD_RIGHT -> when (focusedPosition) {
+                    0 -> { runCatching { focusRequester.requestFocus() }; true }
+                    1 -> { runCatching { rightArrowFr.requestFocus() }; true }
+                    else -> false
+                }
+                else -> false
+            }
         } else false
     }) {
         HorizontalPager(state = pagerState, userScrollEnabled = false, modifier = Modifier.fillMaxSize()) { page ->
@@ -161,6 +176,7 @@ fun CoverFlow(
             modifier = Modifier
                 .align(Alignment.CenterStart)
                 .padding(start = 8.dp)
+                .focusRequester(leftArrowFr)
                 .onFocusChanged { if (it.isFocused) focusedPosition = 0 }
                 .background(if (focusedPosition == 0) Color.White else Color.Transparent, shape = RoundedCornerShape(8.dp))
         ) { Icon(Icons.Filled.KeyboardArrowLeft, contentDescription = "Previous", tint = if (focusedPosition == 0) Color.Black else Color(0xFF2196F3)) }
@@ -173,6 +189,7 @@ fun CoverFlow(
             modifier = Modifier
                 .align(Alignment.CenterEnd)
                 .padding(end = 8.dp)
+                .focusRequester(rightArrowFr)
                 .onFocusChanged { if (it.isFocused) focusedPosition = 2 }
                 .background(if (focusedPosition == 2) Color.White else Color.Transparent, shape = RoundedCornerShape(8.dp))
         ) { Icon(Icons.Filled.KeyboardArrowRight, contentDescription = "Next", tint = if (focusedPosition == 2) Color.Black else Color(0xFF2196F3)) }
