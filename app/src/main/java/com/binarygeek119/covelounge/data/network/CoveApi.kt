@@ -39,7 +39,9 @@ data class PaginatedResponse<T>(
 
 @Serializable
 data class PerformerSummaryDto(
-    val name: String? = null
+    val id: Int = 0,
+    val name: String? = null,
+    val imagePath: String? = null
 )
 
 @Serializable

@@ -9,6 +9,9 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -47,6 +50,7 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.foundation.focusable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.layout.offset
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.graphics.asImageBitmap
@@ -64,6 +68,7 @@ import com.binarygeek119.covelounge.data.ServerStore
 import com.binarygeek119.covelounge.data.SessionRepository
 import com.binarygeek119.covelounge.data.SettingsStore
 import coil.imageLoader
+import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -106,6 +111,7 @@ fun PlayerScreen(baseUrl: String, token: String, type: String, id: Int, onBack: 
     var likeCount by remember { mutableStateOf(0) }
     var viewCount by remember { mutableStateOf(0) }
     var title by remember { mutableStateOf<String?>(null) }
+    var performers by remember { mutableStateOf<List<com.binarygeek119.covelounge.data.network.PerformerSummaryDto>>(emptyList()) }
     var position by remember { mutableStateOf(0L) }
     var duration by remember { mutableStateOf(0L) }
     var spriteBitmap by remember { mutableStateOf<Bitmap?>(null) }
@@ -248,9 +254,16 @@ fun PlayerScreen(baseUrl: String, token: String, type: String, id: Int, onBack: 
     // Fetch title for display
     LaunchedEffect(api, type, id) {
         try {
-            title = when (type) {
-                "audio" -> api.audioDetail(id).title
-                else -> api.videoDetail(id).title
+            when (type) {
+                "audio" -> {
+                    val dto = api.audioDetail(id)
+                    title = dto.title
+                }
+                else -> {
+                    val dto = api.videoDetail(id)
+                    title = dto.title
+                    performers = dto.performers ?: emptyList()
+                }
             }
         } catch (_: Exception) {}
     }
@@ -281,6 +294,34 @@ fun PlayerScreen(baseUrl: String, token: String, type: String, id: Int, onBack: 
                 .fillMaxWidth()
                 .padding(16.dp)
         ) {
+            // Performer images: lower-left, above seek bar, remote-navigable
+            if (performers.isNotEmpty()) {
+                var focusedPerformer by remember { mutableStateOf(-1) }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    performers.forEachIndexed { idx, perf ->
+                        Box(
+                            modifier = Modifier
+                                .size(56.dp)
+                                .onFocusChanged { if (it.isFocused) focusedPerformer = idx else if (focusedPerformer == idx) focusedPerformer = -1 }
+                                .background(if (focusedPerformer == idx) Color(0xFF2196F3) else Color(0x33FFFFFF), androidx.compose.foundation.shape.CircleShape)
+                                .clickable { /* navigate to performer page (later) */ }
+                                .padding(4.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            AsyncImage(
+                                model = "$baseUrl/api/performers/${perf.id}/image?max=128&access_token=$token",
+                                contentDescription = perf.name,
+                                modifier = Modifier.fillMaxSize().clip(androidx.compose.foundation.shape.CircleShape),
+                                contentScale = ContentScale.Crop
+                            )
+                        }
+                    }
+                }
+            }
             Box(modifier = Modifier.fillMaxWidth().onGloballyPositioned { sliderWidth = it.size.width }) {
                 if (isScrubbing && previewBitmap != null) {
                     val frac = if (duration > 0) position.toFloat() / duration.toFloat() else 0f
