@@ -16,6 +16,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.ThumbUp
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
@@ -60,6 +61,8 @@ fun MediaDetailScreen(
     var playFocused by remember { mutableStateOf(false) }
     val previewFr = remember { FocusRequester() }
     var previewFocused by remember { mutableStateOf(false) }
+    val likeFr = remember { FocusRequester() }
+    var likeFocused by remember { mutableStateOf(false) }
     // Start remote focus on the play control so the media item is selectable right away
     LaunchedEffect(Unit) {
         repeat(10) {
@@ -129,7 +132,33 @@ fun MediaDetailScreen(
                         modifier = Modifier.size(32.dp)
                     )
                 }
-                Button(onClick = { viewModel.like() }, modifier = Modifier.padding(top = 8.dp)) { Text("Like (${likeCount})") }
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 8.dp)) {
+                    Box(
+                        modifier = Modifier
+                            .focusRequester(likeFr)
+                            .onFocusChanged { likeFocused = it.isFocused }
+                            .onPreviewKeyEvent { event ->
+                                if (event.nativeKeyEvent.action == KeyEvent.ACTION_DOWN) {
+                                    when (event.nativeKeyEvent.keyCode) {
+                                        KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER -> { viewModel.like(); true }
+                                        else -> false
+                                    }
+                                } else false
+                            }
+                            .background(if (likeFocused) Color(0xFF2196F3) else Color(0x33FFFFFF), CircleShape)
+                            .clickable { viewModel.like() }
+                            .padding(12.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            Icons.Filled.ThumbUp,
+                            contentDescription = "Like",
+                            tint = Color.White,
+                            modifier = Modifier.size(32.dp)
+                        )
+                    }
+                    Text(" $likeCount", color = Color.White, modifier = Modifier.padding(start = 4.dp))
+                }
             }
         }
     }
