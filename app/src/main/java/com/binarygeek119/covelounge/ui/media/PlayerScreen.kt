@@ -1,6 +1,7 @@
 package com.binarygeek119.covelounge.ui.media
 
 import android.net.Uri
+import android.view.KeyEvent
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
@@ -27,7 +28,11 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -57,7 +62,10 @@ fun PlayerScreen(baseUrl: String, token: String, type: String, id: Int, onBack: 
 
     var showGearMenu by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
-
+    val gearFr = remember { FocusRequester() }
+    var gearFocused by remember { mutableStateOf(false) }
+    // Start with the gear focused so the remote can open playback settings right away
+    LaunchedEffect(Unit) { runCatching { gearFr.requestFocus() } }
     BackHandler { if (showGearMenu) showGearMenu = false else onBack() }
 
     val player = remember { ExoPlayer.Builder(context).build() }
@@ -78,7 +86,26 @@ fun PlayerScreen(baseUrl: String, token: String, type: String, id: Int, onBack: 
         player.playWhenReady = true
     }
 
-    Box(Modifier.fillMaxSize()) {
+    Box(
+        Modifier
+            .fillMaxSize()
+            .onPreviewKeyEvent { event ->
+                if (event.nativeKeyEvent.action != KeyEvent.ACTION_DOWN) false
+                else when (event.nativeKeyEvent.keyCode) {
+                    KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER ->
+                        if (gearFocused) { showGearMenu = true; true } else false
+                    KeyEvent.KEYCODE_DPAD_LEFT -> { player.seekBack(); true }
+                    KeyEvent.KEYCODE_DPAD_RIGHT -> { player.seekForward(); true }
+                    KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE, KeyEvent.KEYCODE_MEDIA_PLAY, KeyEvent.KEYCODE_MEDIA_PAUSE -> {
+                        if (player.isPlaying) player.pause() else player.play()
+                        true
+                    }
+                    KeyEvent.KEYCODE_MEDIA_FAST_FORWARD, KeyEvent.KEYCODE_MEDIA_SKIP_FORWARD -> { player.seekForward(); true }
+                    KeyEvent.KEYCODE_MEDIA_REWIND, KeyEvent.KEYCODE_MEDIA_SKIP_BACKWARD -> { player.seekBack(); true }
+                    else -> false
+                }
+            }
+    ) {
         AndroidView(
             factory = { PlayerView(it).apply { this.player = player } },
             modifier = Modifier.fillMaxSize()
@@ -88,8 +115,14 @@ fun PlayerScreen(baseUrl: String, token: String, type: String, id: Int, onBack: 
             modifier = Modifier
                 .align(Alignment.TopEnd)
                 .padding(24.dp)
+                .focusRequester(gearFr)
+                .onFocusChanged { gearFocused = it.isFocused }
         ) {
-            Icon(Icons.Filled.Settings, contentDescription = "Playback settings", tint = Color.White)
+            Icon(
+                Icons.Filled.Settings,
+                contentDescription = "Playback settings",
+                tint = if (gearFocused) Color(0xFF2196F3) else Color.White
+            )
         }
     }
 
