@@ -35,6 +35,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.foundation.focusable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.platform.LocalContext
@@ -76,6 +77,8 @@ fun PlayerScreen(baseUrl: String, token: String, type: String, id: Int, onBack: 
     var gearFocused by remember { mutableStateOf(false) }
     val heartFr = remember { FocusRequester() }
     var heartFocused by remember { mutableStateOf(false) }
+    val playbackFr = remember { FocusRequester() }
+    var playbackFocused by remember { mutableStateOf(false) }
     var isFavorite by remember { mutableStateOf(false) }
     val thumbFr = remember { FocusRequester() }
     var thumbFocused by remember { mutableStateOf(false) }
@@ -86,11 +89,11 @@ fun PlayerScreen(baseUrl: String, token: String, type: String, id: Int, onBack: 
     // after attaching, so retry until focus sticks durably.
     LaunchedEffect(Unit) {
         repeat(40) {
-            runCatching { gearFr.requestFocus() }
+            runCatching { playbackFr.requestFocus() }
             delay(250)
-            if (gearFocused) {
+            if (playbackFocused) {
                 delay(300)
-                if (gearFocused) return@LaunchedEffect
+                if (playbackFocused) return@LaunchedEffect
             }
         }
     }
@@ -149,18 +152,35 @@ fun PlayerScreen(baseUrl: String, token: String, type: String, id: Int, onBack: 
             .onPreviewKeyEvent { event ->
                 if (event.nativeKeyEvent.action != KeyEvent.ACTION_DOWN) false
                 else when (event.nativeKeyEvent.keyCode) {
-                    // OK toggles play/pause; UP is the dedicated "playback settings" key
                     KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER -> {
                         when {
+                            playbackFocused -> { if (player.isPlaying) player.pause() else player.play(); true }
                             gearFocused -> { showGearMenu = true; true }
                             heartFocused -> { toggleFavorite(); true }
                             thumbFocused -> { likeVideo(); true }
                             else -> { if (player.isPlaying) player.pause() else player.play(); true }
                         }
                     }
-                    KeyEvent.KEYCODE_DPAD_UP -> { showGearMenu = true; true }
-                    KeyEvent.KEYCODE_DPAD_LEFT -> { player.seekBack(); true }
-                    KeyEvent.KEYCODE_DPAD_RIGHT -> { player.seekForward(); true }
+                    KeyEvent.KEYCODE_DPAD_UP -> {
+                        if (heartFocused || thumbFocused || gearFocused) {
+                            runCatching { playbackFr.requestFocus() }; true
+                        } else {
+                            showGearMenu = true; true
+                        }
+                    }
+                    KeyEvent.KEYCODE_DPAD_DOWN -> {
+                        if (playbackFocused) {
+                            runCatching { heartFr.requestFocus() }; true
+                        } else false
+                    }
+                    KeyEvent.KEYCODE_DPAD_LEFT -> {
+                        if (playbackFocused) { player.seekBack(); true }
+                        else false // let focus move between controls
+                    }
+                    KeyEvent.KEYCODE_DPAD_RIGHT -> {
+                        if (playbackFocused) { player.seekForward(); true }
+                        else false
+                    }
                     KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE, KeyEvent.KEYCODE_MEDIA_PLAY, KeyEvent.KEYCODE_MEDIA_PAUSE -> {
                         if (player.isPlaying) player.pause() else player.play()
                         true
@@ -177,6 +197,14 @@ fun PlayerScreen(baseUrl: String, token: String, type: String, id: Int, onBack: 
                 isFocusable = false // keys always flow through the Compose handlers above
             } },
             modifier = Modifier.fillMaxSize()
+        )
+        // Invisible focus holder for "playback mode": while focused, D-pad seeks/plays.
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .focusRequester(playbackFr)
+                .onFocusChanged { playbackFocused = it.isFocused }
+                .focusable()
         )
         // All controls in one row below the seek bar (bottom of the player)
         Row(
