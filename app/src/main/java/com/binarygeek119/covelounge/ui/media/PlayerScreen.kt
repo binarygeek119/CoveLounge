@@ -9,16 +9,22 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.FastForward
+import androidx.compose.material.icons.filled.FastRewind
+import androidx.compose.material.icons.filled.Pause
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.ThumbUp
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -84,6 +90,8 @@ fun PlayerScreen(baseUrl: String, token: String, type: String, id: Int, onBack: 
     var thumbFocused by remember { mutableStateOf(false) }
     var likeCount by remember { mutableStateOf(0) }
     var viewCount by remember { mutableStateOf(0) }
+    var position by remember { mutableStateOf(0L) }
+    var duration by remember { mutableStateOf(0L) }
 
     // Start with the gear focused; the AndroidView (PlayerView) steals View focus right
     // after attaching, so retry until focus sticks durably.
@@ -135,8 +143,12 @@ fun PlayerScreen(baseUrl: String, token: String, type: String, id: Int, onBack: 
     var savedPosition by remember { mutableStateOf(0L) }
     LaunchedEffect(Unit) {
         while (true) {
-            delay(1000)
-            if (player.playbackState == Player.STATE_READY) savedPosition = player.currentPosition
+            delay(500)
+            if (player.playbackState == Player.STATE_READY) {
+                savedPosition = player.currentPosition
+                position = player.currentPosition
+                duration = player.duration.coerceAtLeast(0L)
+            }
         }
     }
     LaunchedEffect(url) {
@@ -194,6 +206,7 @@ fun PlayerScreen(baseUrl: String, token: String, type: String, id: Int, onBack: 
         AndroidView(
             factory = { PlayerView(it).apply {
                 this.player = player
+                useController = false
                 isFocusable = false // keys always flow through the Compose handlers above
             } },
             modifier = Modifier.fillMaxSize()
@@ -206,58 +219,91 @@ fun PlayerScreen(baseUrl: String, token: String, type: String, id: Int, onBack: 
                 .onFocusChanged { playbackFocused = it.isFocused }
                 .focusable()
         )
-        // All controls in one row below the seek bar (bottom of the player)
-        Row(
+        // Custom control panel: seek bar on top, buttons below
+        Column(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(bottom = 24.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                .fillMaxWidth()
+                .padding(16.dp)
         ) {
-            IconButton(
-                onClick = { toggleFavorite() },
-                modifier = Modifier
-                    .focusRequester(heartFr)
-                    .onFocusChanged { heartFocused = it.isFocused }
+            Slider(
+                value = if (duration > 0) position.toFloat() / duration.toFloat() else 0f,
+                onValueChange = { /* preview */ },
+                onValueChangeFinished = {
+                    if (duration > 0) player.seekTo((position).coerceIn(0L, duration))
+                },
+                modifier = Modifier.fillMaxWidth()
+            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_fa_heart),
-                    contentDescription = "Favorite",
-                    tint = if (isFavorite) Color(0xFFFF4081) else Color.White
-                )
-            }
-            IconButton(
-                onClick = { likeVideo() },
-                modifier = Modifier
-                    .focusRequester(thumbFr)
-                    .onFocusChanged { thumbFocused = it.isFocused }
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.ThumbUp,
-                    contentDescription = "Like",
-                    tint = if (thumbFocused) Color(0xFF2196F3) else Color.White
-                )
-            }
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_fa_eye_regular),
-                    contentDescription = "Views",
-                    tint = Color.White,
-                    modifier = Modifier.size(20.dp)
-                )
-                Text(" $viewCount", color = Color.White)
-            }
-            IconButton(
-                onClick = { showGearMenu = true },
-                modifier = Modifier
-                    .focusRequester(gearFr)
-                    .onFocusChanged { gearFocused = it.isFocused }
-            ) {
-                Icon(
-                    Icons.Filled.Settings,
-                    contentDescription = "Playback settings",
-                    tint = if (gearFocused) Color(0xFF2196F3) else Color.White
-                )
+                IconButton(
+                    onClick = { if (player.isPlaying) player.pause() else player.play() },
+                    modifier = Modifier.focusRequester(playbackFr).onFocusChanged { playbackFocused = it.isFocused }
+                ) {
+                    Icon(
+                        imageVector = if (player.isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
+                        contentDescription = "Play/Pause",
+                        tint = Color.White
+                    )
+                }
+                IconButton(
+                    onClick = { player.seekBack() }
+                ) {
+                    Icon(imageVector = Icons.Filled.FastRewind, contentDescription = "Rewind", tint = Color.White)
+                }
+                IconButton(
+                    onClick = { player.seekForward() }
+                ) {
+                    Icon(imageVector = Icons.Filled.FastForward, contentDescription = "Forward", tint = Color.White)
+                }
+                IconButton(
+                    onClick = { toggleFavorite() },
+                    modifier = Modifier
+                        .focusRequester(heartFr)
+                        .onFocusChanged { heartFocused = it.isFocused }
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_fa_heart),
+                        contentDescription = "Favorite",
+                        tint = if (isFavorite) Color(0xFFFF4081) else Color.White
+                    )
+                }
+                IconButton(
+                    onClick = { likeVideo() },
+                    modifier = Modifier
+                        .focusRequester(thumbFr)
+                        .onFocusChanged { thumbFocused = it.isFocused }
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.ThumbUp,
+                        contentDescription = "Like",
+                        tint = if (thumbFocused) Color(0xFF2196F3) else Color.White
+                    )
+                }
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_fa_eye_regular),
+                        contentDescription = "Views",
+                        tint = Color.White,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Text(" $viewCount", color = Color.White)
+                }
+                IconButton(
+                    onClick = { showGearMenu = true },
+                    modifier = Modifier
+                        .focusRequester(gearFr)
+                        .onFocusChanged { gearFocused = it.isFocused }
+                ) {
+                    Icon(
+                        Icons.Filled.Settings,
+                        contentDescription = "Playback settings",
+                        tint = if (gearFocused) Color(0xFF2196F3) else Color.White
+                    )
+                }
             }
         }
     }
