@@ -24,6 +24,9 @@ class MediaDetailViewModel(app: Application, val kind: MediaKind, val id: Int) :
     private val _likeCount = MutableStateFlow(0)
     val likeCount: StateFlow<Int> = _likeCount
 
+    private val _isFavorite = MutableStateFlow(false)
+    val isFavorite: StateFlow<Boolean> = _isFavorite
+
     private var api: com.binarygeek119.covelounge.data.network.CoveApi? = null
     private var baseUrl: String = ""
     private var token: String = ""
@@ -39,6 +42,32 @@ class MediaDetailViewModel(app: Application, val kind: MediaKind, val id: Int) :
                     MediaKind.GALLERY -> 0
                 }
                 _likeCount.value = count
+            } catch (_: Exception) {}
+        }
+    }
+
+    private fun hostType(): String = when (kind) {
+        MediaKind.VIDEO -> "Video"
+        MediaKind.AUDIO -> "Audio"
+        MediaKind.IMAGE -> "Image"
+        MediaKind.GALLERY -> "Gallery"
+    }
+
+    fun toggleFavorite() {
+        val a = api ?: return
+        viewModelScope.launch {
+            try {
+                val res = a.setFavorite(hostType(), id, com.binarygeek119.covelounge.data.network.EntityFavoriteDto(!_isFavorite.value))
+                _isFavorite.value = res.isFavorite
+            } catch (_: Exception) {}
+        }
+    }
+
+    private fun fetchFavorite() {
+        val a = api ?: return
+        viewModelScope.launch {
+            try {
+                _isFavorite.value = a.getEngagement(hostType(), id).isFavorite
             } catch (_: Exception) {}
         }
     }
@@ -64,6 +93,7 @@ class MediaDetailViewModel(app: Application, val kind: MediaKind, val id: Int) :
         token = authToken
         api = session.createApi(serverUrl, authToken)
         load()
+        fetchFavorite()
     }
 
     private fun load() {

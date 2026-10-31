@@ -16,6 +16,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.ThumbUp
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material3.Button
@@ -57,12 +58,15 @@ fun MediaDetailScreen(
     val details by viewModel.details.collectAsState()
     val posterUrl by viewModel.posterUrl.collectAsState()
     val likeCount by viewModel.likeCount.collectAsState()
+    val isFavorite by viewModel.isFavorite.collectAsState()
     val playFr = remember { FocusRequester() }
     var playFocused by remember { mutableStateOf(false) }
     val previewFr = remember { FocusRequester() }
     var previewFocused by remember { mutableStateOf(false) }
     val likeFr = remember { FocusRequester() }
     var likeFocused by remember { mutableStateOf(false) }
+    val heartFr = remember { FocusRequester() }
+    var heartFocused by remember { mutableStateOf(false) }
     // Start remote focus on the play control so the media item is selectable right away
     LaunchedEffect(Unit) {
         repeat(10) {
@@ -158,6 +162,31 @@ fun MediaDetailScreen(
                         )
                     }
                     Text(" $likeCount", color = Color.White, modifier = Modifier.padding(start = 4.dp))
+                }
+                Box(
+                    modifier = Modifier
+                        .padding(top = 8.dp)
+                        .focusRequester(heartFr)
+                        .onFocusChanged { heartFocused = it.isFocused }
+                        .onPreviewKeyEvent { event ->
+                            if (event.nativeKeyEvent.action == KeyEvent.ACTION_DOWN) {
+                                when (event.nativeKeyEvent.keyCode) {
+                                    KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER -> { viewModel.toggleFavorite(); true }
+                                    else -> false
+                                }
+                            } else false
+                        }
+                        .background(if (heartFocused) Color(0xFF2196F3) else Color(0x33FFFFFF), CircleShape)
+                        .clickable { viewModel.toggleFavorite() }
+                        .padding(12.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        Icons.Filled.Favorite,
+                        contentDescription = "Favorite",
+                        tint = if (isFavorite) Color(0xFFFF4081) else Color.White,
+                        modifier = Modifier.size(32.dp)
+                    )
                 }
             }
         }
