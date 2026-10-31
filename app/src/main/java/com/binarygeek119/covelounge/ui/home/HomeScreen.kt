@@ -144,6 +144,8 @@ fun HomeScreen(
                                 if (event.nativeKeyEvent.action == android.view.KeyEvent.ACTION_DOWN) {
                                     when (event.nativeKeyEvent.keyCode) {
                                         android.view.KeyEvent.KEYCODE_DPAD_RIGHT -> { settingsFr.requestFocus(); true }
+                                        android.view.KeyEvent.KEYCODE_DPAD_CENTER,
+                                        android.view.KeyEvent.KEYCODE_ENTER -> { onSearchClick(); true }
                                         // Swallow direction keys so focus can't escape this area; only DOWN returns to the spotlight
                                         android.view.KeyEvent.KEYCODE_DPAD_LEFT, android.view.KeyEvent.KEYCODE_DPAD_UP -> true
                                         android.view.KeyEvent.KEYCODE_DPAD_DOWN -> { runCatching { coverFr.requestFocus() }; true }
@@ -161,6 +163,8 @@ fun HomeScreen(
                                 if (event.nativeKeyEvent.action == android.view.KeyEvent.ACTION_DOWN) {
                                     when (event.nativeKeyEvent.keyCode) {
                                         android.view.KeyEvent.KEYCODE_DPAD_LEFT -> { searchFr.requestFocus(); true }
+                                        android.view.KeyEvent.KEYCODE_DPAD_CENTER,
+                                        android.view.KeyEvent.KEYCODE_ENTER -> { onSettingsClick(); true }
                                         // Swallow direction keys so focus can't escape this area; only DOWN returns to the spotlight
                                         android.view.KeyEvent.KEYCODE_DPAD_RIGHT, android.view.KeyEvent.KEYCODE_DPAD_UP -> true
                                         android.view.KeyEvent.KEYCODE_DPAD_DOWN -> { runCatching { coverFr.requestFocus() }; true }
