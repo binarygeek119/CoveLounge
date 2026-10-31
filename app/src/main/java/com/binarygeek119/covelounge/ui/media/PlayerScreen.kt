@@ -2,6 +2,7 @@ package com.binarygeek119.covelounge.ui.media
 
 import android.net.Uri
 import android.view.KeyEvent
+import com.binarygeek119.covelounge.R
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
@@ -34,12 +35,16 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
+import android.app.Application
+import com.binarygeek119.covelounge.data.ServerStore
+import com.binarygeek119.covelounge.data.SessionRepository
 import com.binarygeek119.covelounge.data.SettingsStore
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -47,6 +52,8 @@ import kotlinx.coroutines.launch
 @Composable
 fun PlayerScreen(baseUrl: String, token: String, type: String, id: Int, onBack: () -> Unit) {
     val context = LocalContext.current
+    val app = context.applicationContext as Application
+    val api = remember(baseUrl, token) { SessionRepository(com.binarygeek119.covelounge.data.ServerStore(app)).createApi(baseUrl, token) }
     val settings = remember { SettingsStore(context) }
     val useTranscode by settings.useTranscode.collectAsState(initial = false)
     val transcodeResolution by settings.transcodeResolution.collectAsState(initial = "720p")
@@ -64,6 +71,9 @@ fun PlayerScreen(baseUrl: String, token: String, type: String, id: Int, onBack: 
     val scope = rememberCoroutineScope()
     val gearFr = remember { FocusRequester() }
     var gearFocused by remember { mutableStateOf(false) }
+    val heartFr = remember { FocusRequester() }
+    var heartFocused by remember { mutableStateOf(false) }
+    var isFavorite by remember { mutableStateOf(false) }
 
     // Start with the gear focused; the AndroidView (PlayerView) steals View focus right
     // after attaching, so retry until focus sticks durably.
@@ -75,6 +85,22 @@ fun PlayerScreen(baseUrl: String, token: String, type: String, id: Int, onBack: 
                 delay(300)
                 if (gearFocused) return@LaunchedEffect
             }
+        }
+    }
+
+    val hostType = when (type) {
+        "audio" -> "Audio"
+        else -> "Video"
+    }
+    LaunchedEffect(api, hostType, id) {
+        try { isFavorite = api.getEngagement(hostType, id).isFavorite } catch (_: Exception) {}
+    }
+    fun toggleFavorite() {
+        scope.launch {
+            try {
+                val res = api.setFavorite(hostType, id, com.binarygeek119.covelounge.data.network.EntityFavoriteDto(!isFavorite))
+                isFavorite = res.isFavorite
+            } catch (_: Exception) {}
         }
     }
 
@@ -106,8 +132,11 @@ fun PlayerScreen(baseUrl: String, token: String, type: String, id: Int, onBack: 
                 else when (event.nativeKeyEvent.keyCode) {
                     // OK toggles play/pause; UP is the dedicated "playback settings" key
                     KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER -> {
-                        if (gearFocused) { showGearMenu = true; true }
-                        else { if (player.isPlaying) player.pause() else player.play(); true }
+                        when {
+                            gearFocused -> { showGearMenu = true; true }
+                            heartFocused -> { toggleFavorite(); true }
+                            else -> { if (player.isPlaying) player.pause() else player.play(); true }
+                        }
                     }
                     KeyEvent.KEYCODE_DPAD_UP -> { showGearMenu = true; true }
                     KeyEvent.KEYCODE_DPAD_LEFT -> { player.seekBack(); true }
@@ -129,6 +158,20 @@ fun PlayerScreen(baseUrl: String, token: String, type: String, id: Int, onBack: 
             } },
             modifier = Modifier.fillMaxSize()
         )
+        IconButton(
+            onClick = { toggleFavorite() },
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .padding(24.dp)
+                .focusRequester(heartFr)
+                .onFocusChanged { heartFocused = it.isFocused }
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.ic_fa_heart),
+                contentDescription = "Favorite",
+                tint = if (isFavorite) Color(0xFFFF4081) else Color.White
+            )
+        }
         IconButton(
             onClick = { showGearMenu = true },
             modifier = Modifier

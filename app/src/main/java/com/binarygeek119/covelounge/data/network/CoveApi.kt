@@ -4,6 +4,7 @@ import kotlinx.serialization.Serializable
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
+import retrofit2.http.PUT
 import retrofit2.http.Query
 
 @Serializable
@@ -146,4 +147,26 @@ interface CoveApi {
 
     @POST("images/{id}/like")
     suspend fun likeImage(@retrofit2.http.Path("id") id: Int): Int
+
+    @GET("engagement/{hostType}/{id}")
+    suspend fun getEngagement(
+        @retrofit2.http.Path("hostType") hostType: String,
+        @retrofit2.http.Path("id") id: Int
+    ): EntityEngagementDto
+
+    @PUT("engagement/{hostType}/{id}/favorite")
+    suspend fun setFavorite(
+        @retrofit2.http.Path("hostType") hostType: String,
+        @retrofit2.http.Path("id") id: Int,
+        @Body body: EntityFavoriteDto
+    ): EntityEngagementDto
 }
+
+@Serializable
+data class EntityEngagementDto(
+    val hostId: Int = 0,
+    val isFavorite: Boolean = false
+)
+
+@Serializable
+data class EntityFavoriteDto(val isFavorite: Boolean)
