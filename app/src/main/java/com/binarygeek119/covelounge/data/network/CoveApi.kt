@@ -51,7 +51,14 @@ data class VideoDto(
     val details: String? = null,
     val imagePath: String? = null,
     val performers: List<PerformerSummaryDto>? = null,
-    val rating: Int? = null
+    val rating: Int? = null,
+    val files: List<VideoFileDto>? = null
+)
+
+@Serializable
+data class VideoFileDto(
+    val id: Int = 0,
+    val duration: Double = 0.0
 )
 
 @Serializable
