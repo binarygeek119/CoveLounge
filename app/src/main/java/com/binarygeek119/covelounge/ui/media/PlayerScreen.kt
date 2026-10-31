@@ -241,11 +241,11 @@ fun PlayerScreen(baseUrl: String, token: String, type: String, id: Int, onBack: 
                                     val frameCount = minOf(81, maxOf(1, (duration / 1000 / 2).toInt())).coerceAtLeast(1)
                                     val cols = kotlin.math.ceil(kotlin.math.sqrt(frameCount.toDouble())).toInt()
                                     val rows = kotlin.math.ceil(frameCount.toDouble() / cols).toInt()
-                                    val intervalMs = duration / frameCount
+                                    val intervalMs = (duration / frameCount).coerceAtLeast(1L)
                                     val idx = minOf(frameCount - 1, (position / intervalMs).toInt().coerceAtLeast(0))
                                     val tileW = sb.width / cols
                                     val tileH = sb.height / rows
-                                    previewBitmap = Bitmap.createBitmap(sb, (idx % cols) * tileW, (idx / cols) * tileH, tileW, tileH)
+                                    if (tileW > 0 && tileH > 0) previewBitmap = Bitmap.createBitmap(sb, (idx % cols) * tileW, (idx / cols) * tileH, tileW, tileH)
                                 }
                             }
                             true
@@ -263,11 +263,11 @@ fun PlayerScreen(baseUrl: String, token: String, type: String, id: Int, onBack: 
                                     val frameCount = minOf(81, maxOf(1, (duration / 1000 / 2).toInt())).coerceAtLeast(1)
                                     val cols = kotlin.math.ceil(kotlin.math.sqrt(frameCount.toDouble())).toInt()
                                     val rows = kotlin.math.ceil(frameCount.toDouble() / cols).toInt()
-                                    val intervalMs = duration / frameCount
+                                    val intervalMs = (duration / frameCount).coerceAtLeast(1L)
                                     val idx = minOf(frameCount - 1, (position / intervalMs).toInt().coerceAtLeast(0))
                                     val tileW = sb.width / cols
                                     val tileH = sb.height / rows
-                                    previewBitmap = Bitmap.createBitmap(sb, (idx % cols) * tileW, (idx / cols) * tileH, tileW, tileH)
+                                    if (tileW > 0 && tileH > 0) previewBitmap = Bitmap.createBitmap(sb, (idx % cols) * tileW, (idx / cols) * tileH, tileW, tileH)
                                 }
                             }
                             true
@@ -398,13 +398,13 @@ fun PlayerScreen(baseUrl: String, token: String, type: String, id: Int, onBack: 
                             val frameCount = minOf(81, maxOf(1, (duration / 1000 / 2).toInt())).coerceAtLeast(1)
                             val cols = kotlin.math.ceil(kotlin.math.sqrt(frameCount.toDouble())).toInt()
                             val rows = kotlin.math.ceil(frameCount.toDouble() / cols).toInt()
-                            val intervalMs = duration / frameCount
+                            val intervalMs = (duration / frameCount).coerceAtLeast(1L)
                             val idx = minOf(frameCount - 1, (position / intervalMs).toInt().coerceAtLeast(0))
                             val tileW = sb.width / cols
                             val tileH = sb.height / rows
                             val col = idx % cols
                             val row = idx / cols
-                            previewBitmap = Bitmap.createBitmap(sb, col * tileW, row * tileH, tileW, tileH)
+                            if (tileW > 0 && tileH > 0) previewBitmap = Bitmap.createBitmap(sb, col * tileW, row * tileH, tileW, tileH)
                         }
                     },
                     onValueChangeFinished = {
