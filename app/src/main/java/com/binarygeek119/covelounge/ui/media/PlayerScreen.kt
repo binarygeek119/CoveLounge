@@ -178,59 +178,59 @@ fun PlayerScreen(baseUrl: String, token: String, type: String, id: Int, onBack: 
             } },
             modifier = Modifier.fillMaxSize()
         )
-        IconButton(
-            onClick = { toggleFavorite() },
-            modifier = Modifier
-                .align(Alignment.TopStart)
-                .padding(24.dp)
-                .focusRequester(heartFr)
-                .onFocusChanged { heartFocused = it.isFocused }
-        ) {
-            Icon(
-                painter = painterResource(R.drawable.ic_fa_heart),
-                contentDescription = "Favorite",
-                tint = if (isFavorite) Color(0xFFFF4081) else Color.White
-            )
-        }
-        IconButton(
-            onClick = { likeVideo() },
-            modifier = Modifier
-                .align(Alignment.TopStart)
-                .padding(top = 96.dp, start = 24.dp, end = 24.dp, bottom = 24.dp)
-                .focusRequester(thumbFr)
-                .onFocusChanged { thumbFocused = it.isFocused }
-        ) {
-            Icon(
-                imageVector = Icons.Filled.ThumbUp,
-                contentDescription = "Like",
-                tint = if (thumbFocused) Color(0xFF2196F3) else Color.White
-            )
-        }
-        IconButton(
-            onClick = { showGearMenu = true },
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .padding(24.dp)
-                .focusRequester(gearFr)
-                .onFocusChanged { gearFocused = it.isFocused }
-        ) {
-            Icon(
-                Icons.Filled.Settings,
-                contentDescription = "Playback settings",
-                tint = if (gearFocused) Color(0xFF2196F3) else Color.White
-            )
-        }
+        // All controls in one row below the seek bar (bottom of the player)
         Row(
-            modifier = Modifier.align(Alignment.TopCenter).padding(top = 24.dp),
-            verticalAlignment = Alignment.CenterVertically
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 24.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Icon(
-                painter = painterResource(R.drawable.ic_fa_eye_regular),
-                contentDescription = "Views",
-                tint = Color.White,
-                modifier = Modifier.size(20.dp)
-            )
-            Text(" $viewCount", color = Color.White)
+            IconButton(
+                onClick = { toggleFavorite() },
+                modifier = Modifier
+                    .focusRequester(heartFr)
+                    .onFocusChanged { heartFocused = it.isFocused }
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_fa_heart),
+                    contentDescription = "Favorite",
+                    tint = if (isFavorite) Color(0xFFFF4081) else Color.White
+                )
+            }
+            IconButton(
+                onClick = { likeVideo() },
+                modifier = Modifier
+                    .focusRequester(thumbFr)
+                    .onFocusChanged { thumbFocused = it.isFocused }
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.ThumbUp,
+                    contentDescription = "Like",
+                    tint = if (thumbFocused) Color(0xFF2196F3) else Color.White
+                )
+            }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_fa_eye_regular),
+                    contentDescription = "Views",
+                    tint = Color.White,
+                    modifier = Modifier.size(20.dp)
+                )
+                Text(" $viewCount", color = Color.White)
+            }
+            IconButton(
+                onClick = { showGearMenu = true },
+                modifier = Modifier
+                    .focusRequester(gearFr)
+                    .onFocusChanged { gearFocused = it.isFocused }
+            ) {
+                Icon(
+                    Icons.Filled.Settings,
+                    contentDescription = "Playback settings",
+                    tint = if (gearFocused) Color(0xFF2196F3) else Color.White
+                )
+            }
         }
     }
 
