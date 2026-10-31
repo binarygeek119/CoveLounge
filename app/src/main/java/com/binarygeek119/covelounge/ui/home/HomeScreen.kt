@@ -239,6 +239,7 @@ fun HomeScreen(
                     items = items,
                     focusRequester = focusRequesters.getOrElse(page) { FocusRequester() },
                     showFolder = !isPerformers,
+                    imageAlignment = if (isPerformers) Alignment.TopCenter else Alignment.Center,
                     onFolderClick = {
                         if (isPerformers) return@MediaRow
                         when (kind) {

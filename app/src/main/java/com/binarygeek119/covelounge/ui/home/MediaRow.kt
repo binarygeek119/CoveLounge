@@ -60,6 +60,7 @@ fun MediaRow(
     onRowFocused: (Int) -> Unit = {},
     focusRequester: FocusRequester = remember { FocusRequester() },
     showFolder: Boolean = true,
+    imageAlignment: Alignment = Alignment.Center,
     modifier: Modifier = Modifier
 ) {
     val total = if (showFolder) (items.size + 1).coerceAtLeast(1) else items.size.coerceAtLeast(1) // folder + items
@@ -119,7 +120,7 @@ fun MediaRow(
                     if (showFolder && idx == 0) {
                         FolderCard()
                     } else {
-                        ItemCard(item = items[if (showFolder) idx - 1 else idx])
+                        ItemCard(item = items[if (showFolder) idx - 1 else idx], imageAlignment = imageAlignment)
                     }
                 }
             }
@@ -174,7 +175,7 @@ private fun FolderCard() {
 }
 
 @Composable
-private fun ItemCard(item: MediaCard) {
+private fun ItemCard(item: MediaCard, imageAlignment: Alignment = Alignment.Center) {
     Column(
         modifier = Modifier
             .width(150.dp)
@@ -191,7 +192,8 @@ private fun ItemCard(item: MediaCard) {
                 .width(150.dp)
                 .height(100.dp)
                 .clip(RoundedCornerShape(8.dp)),
-            contentScale = ContentScale.Crop
+            contentScale = ContentScale.Crop,
+            alignment = imageAlignment
         )
         Text(
             text = item.title ?: "Untitled",
