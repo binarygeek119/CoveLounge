@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.ThumbUp
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
@@ -74,6 +75,9 @@ fun PlayerScreen(baseUrl: String, token: String, type: String, id: Int, onBack: 
     val heartFr = remember { FocusRequester() }
     var heartFocused by remember { mutableStateOf(false) }
     var isFavorite by remember { mutableStateOf(false) }
+    val thumbFr = remember { FocusRequester() }
+    var thumbFocused by remember { mutableStateOf(false) }
+    var likeCount by remember { mutableStateOf(0) }
 
     // Start with the gear focused; the AndroidView (PlayerView) steals View focus right
     // after attaching, so retry until focus sticks durably.
@@ -100,6 +104,18 @@ fun PlayerScreen(baseUrl: String, token: String, type: String, id: Int, onBack: 
             try {
                 val res = api.setFavorite(hostType, id, com.binarygeek119.covelounge.data.network.EntityFavoriteDto(!isFavorite))
                 isFavorite = res.isFavorite
+            } catch (_: Exception) {}
+        }
+    }
+
+    fun likeVideo() {
+        scope.launch {
+            try {
+                val count = when (type) {
+                    "audio" -> api.likeAudio(id)
+                    else -> api.likeVideo(id)
+                }
+                likeCount = count
             } catch (_: Exception) {}
         }
     }
@@ -135,6 +151,7 @@ fun PlayerScreen(baseUrl: String, token: String, type: String, id: Int, onBack: 
                         when {
                             gearFocused -> { showGearMenu = true; true }
                             heartFocused -> { toggleFavorite(); true }
+                            thumbFocused -> { likeVideo(); true }
                             else -> { if (player.isPlaying) player.pause() else player.play(); true }
                         }
                     }
@@ -170,6 +187,20 @@ fun PlayerScreen(baseUrl: String, token: String, type: String, id: Int, onBack: 
                 painter = painterResource(R.drawable.ic_fa_heart),
                 contentDescription = "Favorite",
                 tint = if (isFavorite) Color(0xFFFF4081) else Color.White
+            )
+        }
+        IconButton(
+            onClick = { likeVideo() },
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .padding(top = 96.dp, start = 24.dp, end = 24.dp, bottom = 24.dp)
+                .focusRequester(thumbFr)
+                .onFocusChanged { thumbFocused = it.isFocused }
+        ) {
+            Icon(
+                imageVector = Icons.Filled.ThumbUp,
+                contentDescription = "Like",
+                tint = if (thumbFocused) Color(0xFF2196F3) else Color.White
             )
         }
         IconButton(
