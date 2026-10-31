@@ -231,12 +231,47 @@ fun PlayerScreen(baseUrl: String, token: String, type: String, id: Int, onBack: 
                     }
                     KeyEvent.KEYCODE_DPAD_LEFT -> {
                         if (playbackFocused) { player.seekBack(); true }
-                        else if (sliderFocused) false
-                        else false
+                        else if (sliderFocused) {
+                            if (duration > 0) {
+                                val step = (duration / 20).coerceAtLeast(1000L)
+                                position = (position - step).coerceAtLeast(0L)
+                                isScrubbing = true
+                                val sb = spriteBitmap
+                                if (sb != null) {
+                                    val frameCount = minOf(81, maxOf(1, (duration / 1000 / 2).toInt())).coerceAtLeast(1)
+                                    val cols = kotlin.math.ceil(kotlin.math.sqrt(frameCount.toDouble())).toInt()
+                                    val rows = kotlin.math.ceil(frameCount.toDouble() / cols).toInt()
+                                    val intervalMs = duration / frameCount
+                                    val idx = minOf(frameCount - 1, (position / intervalMs).toInt().coerceAtLeast(0))
+                                    val tileW = sb.width / cols
+                                    val tileH = sb.height / rows
+                                    previewBitmap = Bitmap.createBitmap(sb, (idx % cols) * tileW, (idx / cols) * tileH, tileW, tileH)
+                                }
+                            }
+                            true
+                        } else false
                     }
                     KeyEvent.KEYCODE_DPAD_RIGHT -> {
                         if (playbackFocused) { player.seekForward(); true }
-                        else false
+                        else if (sliderFocused) {
+                            if (duration > 0) {
+                                val step = (duration / 20).coerceAtLeast(1000L)
+                                position = (position + step).coerceAtMost(duration)
+                                isScrubbing = true
+                                val sb = spriteBitmap
+                                if (sb != null) {
+                                    val frameCount = minOf(81, maxOf(1, (duration / 1000 / 2).toInt())).coerceAtLeast(1)
+                                    val cols = kotlin.math.ceil(kotlin.math.sqrt(frameCount.toDouble())).toInt()
+                                    val rows = kotlin.math.ceil(frameCount.toDouble() / cols).toInt()
+                                    val intervalMs = duration / frameCount
+                                    val idx = minOf(frameCount - 1, (position / intervalMs).toInt().coerceAtLeast(0))
+                                    val tileW = sb.width / cols
+                                    val tileH = sb.height / rows
+                                    previewBitmap = Bitmap.createBitmap(sb, (idx % cols) * tileW, (idx / cols) * tileH, tileW, tileH)
+                                }
+                            }
+                            true
+                        } else false
                     }
                     KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE, KeyEvent.KEYCODE_MEDIA_PLAY, KeyEvent.KEYCODE_MEDIA_PAUSE -> {
                         if (player.isPlaying) player.pause() else player.play()
