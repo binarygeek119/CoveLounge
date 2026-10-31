@@ -165,7 +165,8 @@ interface CoveApi {
 @Serializable
 data class EntityEngagementDto(
     val hostId: Int = 0,
-    val isFavorite: Boolean = false
+    val isFavorite: Boolean = false,
+    val playCount: Int = 0
 )
 
 @Serializable

@@ -8,6 +8,8 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -78,6 +80,7 @@ fun PlayerScreen(baseUrl: String, token: String, type: String, id: Int, onBack: 
     val thumbFr = remember { FocusRequester() }
     var thumbFocused by remember { mutableStateOf(false) }
     var likeCount by remember { mutableStateOf(0) }
+    var viewCount by remember { mutableStateOf(0) }
 
     // Start with the gear focused; the AndroidView (PlayerView) steals View focus right
     // after attaching, so retry until focus sticks durably.
@@ -97,7 +100,7 @@ fun PlayerScreen(baseUrl: String, token: String, type: String, id: Int, onBack: 
         else -> "Video"
     }
     LaunchedEffect(api, hostType, id) {
-        try { isFavorite = api.getEngagement(hostType, id).isFavorite } catch (_: Exception) {}
+        try { val e = api.getEngagement(hostType, id); isFavorite = e.isFavorite; viewCount = e.playCount } catch (_: Exception) {}
     }
     fun toggleFavorite() {
         scope.launch {
@@ -216,6 +219,18 @@ fun PlayerScreen(baseUrl: String, token: String, type: String, id: Int, onBack: 
                 contentDescription = "Playback settings",
                 tint = if (gearFocused) Color(0xFF2196F3) else Color.White
             )
+        }
+        Row(
+            modifier = Modifier.align(Alignment.TopCenter).padding(top = 24.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.ic_fa_eye_regular),
+                contentDescription = "Views",
+                tint = Color.White,
+                modifier = Modifier.size(20.dp)
+            )
+            Text(" $viewCount", color = Color.White)
         }
     }
 
