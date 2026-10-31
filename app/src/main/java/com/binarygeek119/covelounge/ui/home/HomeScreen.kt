@@ -77,6 +77,13 @@ fun HomeScreen(
     val settingsFr = remember { FocusRequester() }
     val coverFr = remember { FocusRequester() }
 
+    // Initial focus: spotlight center (or Search if no screenshots), so the remote works right away
+    LaunchedEffect(screenshots) {
+        runCatching {
+            if (screenshots.isNotEmpty()) coverFr.requestFocus() else searchFr.requestFocus()
+        }
+    }
+
     Column(modifier = Modifier.fillMaxSize().background(Color.Black)) {
         if (isLoading) {
             Text("Loading...", color = Color.Gray, modifier = Modifier.padding(16.dp))
