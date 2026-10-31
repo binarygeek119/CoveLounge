@@ -65,7 +65,12 @@ fun PlayerScreen(baseUrl: String, token: String, type: String, id: Int, onBack: 
     val gearFr = remember { FocusRequester() }
     var gearFocused by remember { mutableStateOf(false) }
     // Start with the gear focused so the remote can open playback settings right away
-    LaunchedEffect(Unit) { runCatching { gearFr.requestFocus() } }
+    LaunchedEffect(Unit) {
+        repeat(10) {
+            if (runCatching { gearFr.requestFocus() }.isSuccess) return@LaunchedEffect
+            delay(100)
+        }
+    }
     BackHandler { if (showGearMenu) showGearMenu = false else onBack() }
 
     val player = remember { ExoPlayer.Builder(context).build() }
