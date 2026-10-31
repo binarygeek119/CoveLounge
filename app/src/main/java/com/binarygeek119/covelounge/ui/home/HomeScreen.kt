@@ -222,14 +222,6 @@ fun HomeScreen(
                     )
                 }
             }
-            // Fixed selector overlay
-            Box(
-                modifier = Modifier
-                    .align(Alignment.CenterStart)
-                    .padding(start = 16.dp)
-                    .size(150.dp, 100.dp)
-                    .border(4.dp, Color(0xFF2196F3), RoundedCornerShape(12.dp))
-            )
         }
     }
 
