@@ -206,21 +206,20 @@ fun HomeScreen(
                 modifier = Modifier.fillMaxSize()
             ) { page ->
                 val (title, items, kind) = rows[page]
-                Box(modifier = Modifier.focusRequester(focusRequesters.getOrElse(page) { FocusRequester() })) {
-                    MediaRow(
-                        title = title,
-                        items = items,
-                        onFolderClick = {
-                            when (kind) {
-                                MediaKind.VIDEO -> onOpenFolder(MediaKind.VIDEO)
-                                MediaKind.AUDIO -> onOpenFolder(MediaKind.AUDIO)
-                                MediaKind.IMAGE -> onOpenFolder(MediaKind.IMAGE)
-                                MediaKind.GALLERY -> onOpenFolder(MediaKind.GALLERY)
-                            }
-                        },
-                        onItemClick = { card -> onOpenItem(kind, card.id) }
-                    )
-                }
+                MediaRow(
+                    title = title,
+                    items = items,
+                    focusRequester = focusRequesters.getOrElse(page) { FocusRequester() },
+                    onFolderClick = {
+                        when (kind) {
+                            MediaKind.VIDEO -> onOpenFolder(MediaKind.VIDEO)
+                            MediaKind.AUDIO -> onOpenFolder(MediaKind.AUDIO)
+                            MediaKind.IMAGE -> onOpenFolder(MediaKind.IMAGE)
+                            MediaKind.GALLERY -> onOpenFolder(MediaKind.GALLERY)
+                        }
+                    },
+                    onItemClick = { card -> onOpenItem(kind, card.id) }
+                )
             }
         }
     }
