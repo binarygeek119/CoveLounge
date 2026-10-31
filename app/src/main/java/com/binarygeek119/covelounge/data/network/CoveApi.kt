@@ -50,7 +50,8 @@ data class VideoDto(
     val title: String? = null,
     val details: String? = null,
     val imagePath: String? = null,
-    val performers: List<PerformerSummaryDto>? = null
+    val performers: List<PerformerSummaryDto>? = null,
+    val rating: Int? = null
 )
 
 @Serializable
@@ -58,20 +59,23 @@ data class AudioDto(
     val id: Int,
     val title: String? = null,
     val details: String? = null,
-    val imagePath: String? = null
+    val imagePath: String? = null,
+    val rating: Int? = null
 )
 
 @Serializable
 data class ImageDto(
     val id: Int,
     val title: String? = null,
-    val details: String? = null
+    val details: String? = null,
+    val rating: Int? = null
 )
 
 @Serializable
 data class GalleryDto(
     val id: Int,
-    val title: String? = null
+    val title: String? = null,
+    val rating: Int? = null
 )
 
 interface CoveApi {

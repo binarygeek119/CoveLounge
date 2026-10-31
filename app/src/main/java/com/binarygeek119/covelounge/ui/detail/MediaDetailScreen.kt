@@ -17,6 +17,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.StarBorder
+import androidx.compose.material.icons.filled.StarHalf
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.ThumbUp
 import androidx.compose.material.icons.filled.Visibility
@@ -60,6 +63,7 @@ fun MediaDetailScreen(
     val posterUrl by viewModel.posterUrl.collectAsState()
     val likeCount by viewModel.likeCount.collectAsState()
     val isFavorite by viewModel.isFavorite.collectAsState()
+    val rating by viewModel.rating.collectAsState()
     val performers by viewModel.performers.collectAsState()
     val playFr = remember { FocusRequester() }
     var playFocused by remember { mutableStateOf(false) }
@@ -194,6 +198,28 @@ fun MediaDetailScreen(
                         )
                     }
                 }
+                // Rating row (visual only)
+                rating?.let { r ->
+                    val normalized = if (r <= 5) r * 20 else r
+                    val stars = normalized / 20.0
+                    Row(modifier = Modifier.padding(top = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+                        for (i in 0 until 5) {
+                            val threshold = i + 1
+                            val icon = when {
+                                stars >= threshold -> Icons.Filled.Star
+                                stars >= threshold - 0.5 -> Icons.Filled.StarHalf
+                                else -> Icons.Filled.StarBorder
+                            }
+                            Icon(
+                                imageVector = icon,
+                                contentDescription = null,
+                                tint = Color(0xFFFFC107),
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                    }
+                }
+
                 // Performers row (2 visible, L/R scrolls)
                 if (performers.isNotEmpty()) {
                     val visibleCount = 2
