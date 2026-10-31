@@ -37,9 +37,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.binarygeek119.covelounge.R
 
 @Composable
 fun MediaDetailScreen(
@@ -94,7 +96,7 @@ fun MediaDetailScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        Icons.Filled.PlayArrow,
+                        painter = painterResource(R.drawable.ic_fa_play),
                         contentDescription = "Play",
                         tint = Color.White,
                         modifier = Modifier.size(48.dp)
