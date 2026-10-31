@@ -107,6 +107,8 @@ fun PlayerScreen(baseUrl: String, token: String, type: String, id: Int, onBack: 
     var rewindFocused by remember { mutableStateOf(false) }
     val forwardFr = remember { FocusRequester() }
     var forwardFocused by remember { mutableStateOf(false) }
+    val sliderFr = remember { FocusRequester() }
+    var sliderFocused by remember { mutableStateOf(false) }
     var isFavorite by remember { mutableStateOf(false) }
     val thumbFr = remember { FocusRequester() }
     var thumbFocused by remember { mutableStateOf(false) }
@@ -207,6 +209,7 @@ fun PlayerScreen(baseUrl: String, token: String, type: String, id: Int, onBack: 
                         when {
                             playbackFocused -> { if (player.isPlaying) player.pause() else player.play(); true }
                             playbackFocused -> { if (player.isPlaying) player.pause() else player.play(); true }
+                            sliderFocused -> { if (duration > 0) player.seekTo(position.coerceIn(0L, duration)); isScrubbing = false; previewBitmap = null; true }
                             playPauseFocused -> { if (player.isPlaying) player.pause() else player.play(); true }
                             gearFocused -> { showGearMenu = true; true }
                             heartFocused -> { toggleFavorite(); true }
@@ -215,7 +218,7 @@ fun PlayerScreen(baseUrl: String, token: String, type: String, id: Int, onBack: 
                         }
                     }
                     KeyEvent.KEYCODE_DPAD_UP -> {
-                        if (playPauseFocused || rewindFocused || forwardFocused || heartFocused || thumbFocused || gearFocused) {
+                        if (sliderFocused || playPauseFocused || rewindFocused || forwardFocused || heartFocused || thumbFocused || gearFocused) {
                             runCatching { playbackFr.requestFocus() }; true
                         } else {
                             showGearMenu = true; true
@@ -223,12 +226,13 @@ fun PlayerScreen(baseUrl: String, token: String, type: String, id: Int, onBack: 
                     }
                     KeyEvent.KEYCODE_DPAD_DOWN -> {
                         if (playbackFocused) {
-                            runCatching { heartFr.requestFocus() }; true
+                            runCatching { sliderFr.requestFocus() }; true
                         } else false
                     }
                     KeyEvent.KEYCODE_DPAD_LEFT -> {
                         if (playbackFocused) { player.seekBack(); true }
-                        else false // let focus move between controls
+                        else if (sliderFocused) false
+                        else false
                     }
                     KeyEvent.KEYCODE_DPAD_RIGHT -> {
                         if (playbackFocused) { player.seekForward(); true }
@@ -373,7 +377,7 @@ fun PlayerScreen(baseUrl: String, token: String, type: String, id: Int, onBack: 
                         isScrubbing = false
                         previewBitmap = null
                     },
-                    modifier = Modifier.fillMaxWidth().padding(top = if (isScrubbing && previewBitmap != null) 88.dp else 0.dp)
+                    modifier = Modifier.fillMaxWidth().focusRequester(sliderFr).onFocusChanged { sliderFocused = it.isFocused }.padding(top = if (isScrubbing && previewBitmap != null) 88.dp else 0.dp)
                 )
             }
             Row(
