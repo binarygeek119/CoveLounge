@@ -1,8 +1,8 @@
-# ChannelFlow pin server
+# ChannelFlow / CoveLounge pin server
 
 Repo: [github.com/binarygeek119/channelflow-pin-server](https://github.com/binarygeek119/channelflow-pin-server)
 
-Small always-on pin server for a Google Cloud VM. ChannelFlow apps connect and receive a random **8-character quick PIN**. The user types that PIN on ChannelFlow-Server’s **Quick Pin** tab. The server encrypts its public and local M3U/XMLTV URLs with the PIN as the seed; this process forwards the ciphertext to the waiting app and never opens it.
+Small always-on pin server for a Google Cloud VM. ChannelFlow and CoveLounge apps connect and receive a random **8-character quick PIN**. The user types that PIN on ChannelFlow-Server’s / Cove’s **Quick Pin** tab. The server encrypts its public and local M3U/XMLTV URLs with the PIN as the seed; this process forwards the ciphertext to the waiting app and never opens it.
 
 [ChannelFlow-Server](https://github.com/binarygeek119/ChannelFlow) stays on your home machine. Live TV does not go through this VM.
 
