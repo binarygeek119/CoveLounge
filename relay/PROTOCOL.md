@@ -2,7 +2,7 @@
 
 This is the contract for Cove’s **Quick Pin** tab and the CoveLounge app. The pin server only routes ciphertext. It never encrypts, decrypts, or logs URLs.
 
-Public origin after GCP setup: `https://channelflow.duckdns.org` (or the DuckDNS name you chose).
+Public origin after GCP setup: your configured DuckDNS origin (or the name you chose).
 
 ## PIN
 
@@ -150,7 +150,7 @@ Content-Type: application/json
 - `404` — unknown, expired, or already used (no extra detail)
 - `{pin}` in the path may include a dash (`K7M2-Q9AB`)
 
-Set the pin server origin to `https://channelflow.duckdns.org` (or your subdomain).
+Set the pin server origin to your configured DuckDNS origin (or your subdomain).
 
 ## Other
 
