@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -35,7 +34,6 @@ fun NumberPad(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        // Rows 1-3, 4-6, 7-9
         for (row in 0..2) {
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 for (col in 0..2) {
@@ -44,11 +42,9 @@ fun NumberPad(
                 }
             }
         }
-        // Bottom row: backspace, 0
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             NumberButton(text = "⌫") { onBackspace() }
             NumberButton(text = "0") { onDigit(0) }
-            // Spacer for alignment
             Box(modifier = Modifier.size(64.dp))
         }
     }

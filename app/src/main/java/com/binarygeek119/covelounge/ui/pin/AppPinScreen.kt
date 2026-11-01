@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -24,7 +25,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -49,7 +49,6 @@ fun AppPinScreen(
     val serverStore = remember { ServerStore(context) }
     val session = remember { SessionRepository(serverStore) }
 
-    val appPinFlow = store.appPin
     var storedPinHash by remember { mutableStateOf<String?>(null) }
     var enteredPin by remember { mutableStateOf("") }
     var isVerifying by remember { mutableStateOf(false) }
@@ -83,7 +82,7 @@ fun AppPinScreen(
 
     // Verify PIN when 4 digits entered
     LaunchedEffect(enteredPin) {
-        if (enteredPin.length == 4 && !isVerifying) {
+        if (enteredPin.length == 4 && !isVerifying && !showForgot) {
             isVerifying = true
             val hash = SettingsStore.hashPin(enteredPin)
             if (hash == storedPinHash) {
@@ -92,20 +91,6 @@ fun AppPinScreen(
                 showError = true
             }
             isVerifying = false
-        }
-    }
-
-    // Forgot PIN polling
-    LaunchedEffect(isPolling, forgotCode) {
-        if (isPolling && forgotCode != null) {
-            // Poll server for verification
-            // For now, simulate - in production, poll actual endpoint
-            // val api = ... createApi ...
-            // while (isPolling) {
-            //     delay(2000)
-            //     val verified = api.checkPinResetStatus(forgotCode)
-            //     if (verified) { store.removeAppPin(); onUnlocked(); break }
-            // }
         }
     }
 
@@ -118,7 +103,7 @@ fun AppPinScreen(
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
             // Logo
-            Text("CoveLounge", color = Color.White, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+            Text("CoveLounge", color = Color.White, fontWeight = FontWeight.Bold)
 
             if (!showForgot) {
                 // PIN entry
@@ -172,16 +157,17 @@ fun AppPinScreen(
                 }
             } else {
                 // Forgot PIN flow
-                Text("Forgot PIN", color = Color.White, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+                Text("Forgot PIN", color = Color.White, fontWeight = FontWeight.Bold)
                 Text(forgotStatus, color = Color.White)
 
                 if (forgotCode != null) {
-                    Text("Verification code: $forgotCode", color = Color(0xFFFFC107), fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+                    Text("Verification code: $forgotCode", color = Color(0xFFFFC107), fontWeight = FontWeight.Bold)
                 }
 
                 Text("Go to Cove and enter this code to verify your identity.", color = Color.Gray)
 
-                // Simulate verification for testing (remove in production)
+                // In production: poll server endpoint to check verification
+                // For now: manual confirmation button
                 Button(onClick = {
                     scope.launch {
                         // In production: poll server endpoint

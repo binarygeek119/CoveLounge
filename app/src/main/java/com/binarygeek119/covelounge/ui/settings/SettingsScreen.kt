@@ -32,6 +32,7 @@ import com.binarygeek119.covelounge.data.ServerStore
 import com.binarygeek119.covelounge.data.SessionRepository
 import com.binarygeek119.covelounge.BuildConfig
 import com.binarygeek119.covelounge.data.SettingsStore
+import com.binarygeek119.covelounge.ui.pin.NumberPad
 import com.binarygeek119.covelounge.ui.pin.AppPinScreen
 import com.binarygeek119.covelounge.ui.pin.NumberPad
 import com.binarygeek119.covelounge.util.ImageCache
@@ -157,14 +158,21 @@ fun SettingsScreen(onBack: () -> Unit, onLogout: () -> Unit = {}) {
                 Text("App PIN")
                 if (appPin != null) {
                     Text("PIN is currently set", color = Color.Green)
-                    Text("Remove PIN", color = Color.White, modifier = Modifier.clickable {
-                        scope.launch { store.removeAppPin() }
-                    })
+                    var showRemoveConfirm by remember { mutableStateOf(false) }
+                    Button(onClick = { showRemoveConfirm = true }) { Text("Remove PIN") }
+                    if (showRemoveConfirm) {
+                        Text("Are you sure you want to remove the PIN?", color = Color.White)
+                        Button(onClick = {
+                            scope.launch { store.removeAppPin() }
+                            showRemoveConfirm = false
+                        }) { Text("Yes, remove") }
+                        Button(onClick = { showRemoveConfirm = false }) { Text("Cancel") }
+                    }
                 } else {
                     Text("No PIN set", color = Color.Gray)
                     var newPin by remember { mutableStateOf("") }
                     var confirmPin by remember { mutableStateOf("") }
-                    var step by remember { mutableStateOf(0) } // 0=enter, 1=confirm
+                    var step by remember { mutableStateOf(0) }
                     var error by remember { mutableStateOf<String?>(null) }
 
                     if (step == 0) {
