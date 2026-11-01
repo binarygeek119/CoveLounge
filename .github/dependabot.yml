@@ -11,6 +11,8 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    labels:
+      - "atv"
 
   - package-ecosystem: "gomod"
     directory: "/relay"
