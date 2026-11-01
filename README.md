@@ -1,5 +1,7 @@
 # CoveLounge
 
+![CoveLounge logo](logo.png)
+
 CoveLounge is an Android TV client for [Cove](https://github.com/yourcove/cove), built with Jetpack Compose. It provides a remote-friendly (D-pad) interface for browsing and playing media from a Cove server.
 
 ## Features
