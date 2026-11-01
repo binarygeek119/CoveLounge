@@ -20,6 +20,7 @@ class SettingsStore(private val context: Context) {
     private val KEY_TRANSCODE_RESOLUTION = stringPreferencesKey("transcode_resolution")
     private val KEY_RATINGS_ON_EXIT = booleanPreferencesKey("ratings_on_exit")
     private val KEY_APP_PIN = stringPreferencesKey("app_pin")
+    private val KEY_SPOTLIGHT_VOLUME = intPreferencesKey("spotlight_volume")
 
     val previewMode: Flow<String> = context.settingsDataStore.data.map { it[KEY_PREVIEW_MODE] ?: "Off" }
     val screenshotCount: Flow<Int> = context.settingsDataStore.data.map { it[KEY_SCREENSHOT_COUNT] ?: 10 }
@@ -28,6 +29,7 @@ class SettingsStore(private val context: Context) {
     val transcodeResolution: Flow<String> = context.settingsDataStore.data.map { it[KEY_TRANSCODE_RESOLUTION] ?: "720p" }
     val ratingsOnExit: Flow<Boolean> = context.settingsDataStore.data.map { it[KEY_RATINGS_ON_EXIT] ?: false }
     val appPin: Flow<String?> = context.settingsDataStore.data.map { it[KEY_APP_PIN] }
+    val spotlightVolume: Flow<Int> = context.settingsDataStore.data.map { it[KEY_SPOTLIGHT_VOLUME] ?: 3 }
 
     suspend fun setPreviewMode(mode: String) {
         context.settingsDataStore.edit { it[KEY_PREVIEW_MODE] = mode }
@@ -56,6 +58,10 @@ class SettingsStore(private val context: Context) {
     suspend fun setAppPin(pin: String) {
         val hash = hashPin(pin)
         context.settingsDataStore.edit { it[KEY_APP_PIN] = hash }
+    }
+
+    suspend fun setSpotlightVolume(level: Int) {
+        context.settingsDataStore.edit { it[KEY_SPOTLIGHT_VOLUME] = level.coerceIn(0, 3) }
     }
 
     suspend fun removeAppPin() {

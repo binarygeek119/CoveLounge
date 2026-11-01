@@ -67,19 +67,55 @@ fun MediaRow(
     val pagerState = rememberPagerState(pageCount = { Int.MAX_VALUE })
     var sel by remember { mutableStateOf(0) }
     var lap by remember { mutableStateOf(0) }
+    var rightEndLatched by remember { mutableStateOf(false) }
+    var leftEndLatched by remember { mutableStateOf(false) }
     var rowFocused by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     val screenWidthDp = LocalConfiguration.current.screenWidthDp
 
     val move: (Int) -> Unit = { dir ->
-        var s = sel + dir
-        var l = lap
-        if (s < 0) { s = total - 1; l -= 1 }
-        if (s >= total) { s = 0; l += 1 }
-        sel = s
-        lap = l
-        onRowFocused(rowIndex)
-        scope.launch { pagerState.animateScrollToPage(l * total + s) }
+        if (dir < 0) {
+            rightEndLatched = false
+            if (sel > 0) {
+                leftEndLatched = false
+                sel -= 1
+                onRowFocused(rowIndex)
+                scope.launch { pagerState.animateScrollToPage(lap * total + sel) }
+            } else {
+                // at folder (left end)
+                if (leftEndLatched) {
+                    // one more left: loop around to end
+                    leftEndLatched = false
+                    sel = total - 1
+                    onRowFocused(rowIndex)
+                    scope.launch { pagerState.animateScrollToPage(lap * total + sel) }
+                } else {
+                    leftEndLatched = true
+                    // end cap: stay
+                }
+            }
+        } else {
+            if (sel < total - 1) {
+                rightEndLatched = false
+                leftEndLatched = false
+                sel += 1
+                onRowFocused(rowIndex)
+                scope.launch { pagerState.animateScrollToPage(lap * total + sel) }
+            } else {
+                // at last item
+                if (rightEndLatched) {
+                    // one more right: jump back to folder
+                    rightEndLatched = false
+                    lap += 1
+                    sel = 0
+                    onRowFocused(rowIndex)
+                    scope.launch { pagerState.animateScrollToPage(lap * total + sel) }
+                } else {
+                    rightEndLatched = true
+                    // end cap: stay
+                }
+            }
+        }
     }
 
     Column(modifier = modifier.fillMaxWidth().padding(vertical = 8.dp)) {
@@ -91,7 +127,7 @@ fun MediaRow(
                 .focusRequester(focusRequester)
                 .onFocusChanged {
                     rowFocused = it.isFocused
-                    if (it.isFocused) onRowFocused(rowIndex)
+                    if (it.isFocused) { rightEndLatched = false; leftEndLatched = false; onRowFocused(rowIndex) }
                 }
                 .onPreviewKeyEvent { event ->
                     if (event.nativeKeyEvent.action != KeyEvent.ACTION_DOWN) false

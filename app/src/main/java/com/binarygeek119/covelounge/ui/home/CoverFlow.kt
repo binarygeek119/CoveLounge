@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -25,6 +26,8 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.Composable
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -36,6 +39,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
@@ -44,6 +48,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import android.view.KeyEvent
+import android.view.TextureView
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -51,9 +56,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.media3.common.MediaItem
+import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
 import coil.compose.AsyncImage
+import coil.imageLoader
 import com.binarygeek119.covelounge.data.MediaCard
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -69,7 +76,9 @@ fun CoverFlow(
     focusRequester: FocusRequester = remember { FocusRequester() },
     previewMode: String = "Off",
     previewUrlProvider: (MediaCard) -> String? = { null },
+    fullVideoUrlProvider: (MediaCard) -> String? = { null },
     intervalSeconds: Int = 10,
+    volumeLevel: Int = 3,
     modifier: Modifier = Modifier
 ) {
     if (items.isEmpty()) {
@@ -81,12 +90,21 @@ fun CoverFlow(
     val pagerState = rememberPagerState(pageCount = { items.size })
     val scope = rememberCoroutineScope()
     var focusedPosition by remember { mutableStateOf(1) }
+    var initialJumpDone by remember { mutableStateOf(false) }
     val leftArrowFr = remember { FocusRequester() }
     val rightArrowFr = remember { FocusRequester() }
     val context = LocalContext.current
     val player = remember { ExoPlayer.Builder(context).build() }
     DisposableEffect(Unit) { onDispose { player.release() } }
-    LaunchedEffect(items) {
+    LaunchedEffect(pagerState.currentPage) {
+        val nextIdx = (pagerState.currentPage + 1) % items.size
+        val nextItem = items.getOrNull(nextIdx) ?: return@LaunchedEffect
+        try {
+            val req = coil.request.ImageRequest.Builder(context).data(nextItem.posterUrl).build()
+            context.imageLoader.enqueue(req)
+        } catch (_: Exception) {}
+    }
+    LaunchedEffect(items, intervalSeconds) {
         while (true) {
             delay(intervalSeconds * 1000L)
             val next = (pagerState.currentPage + 1) % items.size
@@ -94,17 +112,38 @@ fun CoverFlow(
         }
     }
     LaunchedEffect(pagerState.currentPage, previewMode) {
+        initialJumpDone = false
         if (previewMode == "Off" || items.isEmpty()) {
             player.stop()
             return@LaunchedEffect
         }
-        val url = previewUrlProvider(items[pagerState.currentPage]) ?: return@LaunchedEffect
+        val item = items[pagerState.currentPage]
+        val url = if (previewMode == "Video") (fullVideoUrlProvider(item) ?: previewUrlProvider(item)) else previewUrlProvider(item)
+        if (url == null) { player.stop(); return@LaunchedEffect }
         player.setMediaItem(MediaItem.fromUri(url))
-        player.volume = when (previewMode) {
-            "Muted" -> 0f
-            "Low" -> 0.3f
-            "Full" -> 1f
-            else -> 0f
+        player.volume = when (volumeLevel) {
+            0 -> 0f
+            1 -> 0.2f
+            2 -> 0.5f
+            else -> 1f
+        }
+        if (previewMode == "Video") {
+            player.addListener(object : Player.Listener {
+                override fun onPlaybackStateChanged(state: Int) {
+                    if (state == Player.STATE_READY) {
+                        val durSec = (player.duration / 1000).toInt()
+                        val startSec = if (durSec <= 0) 20 else when {
+                            durSec < 120 -> 0
+                            durSec > 3600 -> 1200
+                            durSec > 1800 -> 300
+                            durSec > 900 -> 180
+                            else -> 20
+                        }
+                        if (startSec > 0) player.seekTo(startSec * 1000L)
+                        player.removeListener(this)
+                    }
+                }
+            })
         }
         player.prepare()
         player.playWhenReady = true
@@ -131,16 +170,27 @@ fun CoverFlow(
     }) {
         HorizontalPager(state = pagerState, userScrollEnabled = false, modifier = Modifier.fillMaxSize()) { page ->
             val item = items[page]
-            if (previewMode != "Off" && page == pagerState.currentPage) {
-                AndroidView(
-                    factory = { PlayerView(it).apply { this.player = player; useController = false } },
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .then(if (page == pagerState.currentPage) Modifier.focusRequester(focusRequester) else Modifier)
-                        .alpha(if (focusedPosition == 1) 1f else 0f)
-                        .onFocusChanged { if (it.isFocused) { focusedPosition = 1; onFocus() } }
-                        .clickable { onOpen(item) }
-                )
+            if ((previewMode == "Previews" || previewMode == "Video") && page == pagerState.currentPage) {
+                Box(modifier = Modifier.fillMaxSize()) {
+                    AsyncImage(
+                        model = item.posterUrl,
+                        contentDescription = item.title,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                    var showVideo by remember { mutableStateOf(false) }
+                    LaunchedEffect(page, previewMode) { delay(1200); showVideo = true }
+                    val videoAlpha by animateFloatAsState(targetValue = if (showVideo) 1f else 0f, animationSpec = tween(1200), label = "vidAlpha")
+                    AndroidView(
+                        factory = { android.view.TextureView(it).apply { player.setVideoTextureView(this) } },
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .alpha(videoAlpha * (if (focusedPosition == 1) 1f else 0f))
+                            .then(if (page == pagerState.currentPage) Modifier.focusRequester(focusRequester) else Modifier)
+                            .onFocusChanged { if (it.isFocused) { focusedPosition = 1; onFocus() } }
+                            .clickable { onOpen(item) }
+                    )
+                }
             } else {
                 AsyncImage(
                     model = item.posterUrl,

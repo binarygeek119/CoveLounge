@@ -40,6 +40,10 @@ import com.binarygeek119.covelounge.ui.detail.MediaDetailScreen
 import com.binarygeek119.covelounge.ui.detail.MediaDetailViewModel
 import com.binarygeek119.covelounge.ui.home.HomeScreen
 import com.binarygeek119.covelounge.ui.medialist.MediaListScreen
+import com.binarygeek119.covelounge.ui.performerlist.PerformerListScreen
+import com.binarygeek119.covelounge.ui.performerdetail.PerformerDetailScreen
+import com.binarygeek119.covelounge.ui.performerdetail.PerformerDetailViewModel
+import com.binarygeek119.covelounge.ui.performerlist.PerformerListViewModel
 import com.binarygeek119.covelounge.ui.medialist.MediaListViewModel
 import com.binarygeek119.covelounge.ui.home.HomeViewModel
 import com.binarygeek119.covelounge.ui.login.LoginScreen
@@ -54,6 +58,7 @@ import com.binarygeek119.covelounge.ui.search.SearchViewModel
 import com.binarygeek119.covelounge.ui.theme.CoveLoungeTheme
 
 class MainActivity : ComponentActivity() {
+    var pinVerified by mutableStateOf(false)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val store = ServerStore(applicationContext)
@@ -62,6 +67,11 @@ class MainActivity : ComponentActivity() {
         val homeVm = HomeViewModel(application)
         val quickPinVm = QuickPinViewModel(application)
         SoundManager.init(application)
+        lifecycle.addObserver(androidx.lifecycle.LifecycleEventObserver { _, event ->
+            if (event == androidx.lifecycle.Lifecycle.Event.ON_STOP) {
+                pinVerified = false
+            }
+        })
 
         val backCallback = object : androidx.activity.OnBackPressedCallback(false) {
             override fun handleOnBackPressed() {
@@ -78,7 +88,6 @@ class MainActivity : ComponentActivity() {
                 val quickSuccess by quickPinVm.success.collectAsState()
                 var useQuickPin by remember { mutableStateOf(false) }
                 val appPin by settingsStore.appPin.collectAsState(initial = null)
-                var pinVerified by remember { mutableStateOf(false) }
                 var selectedVideo by remember { mutableStateOf<Int?>(null) }
                 var selectedStartPosition by remember { mutableStateOf(0L) }
                 var selectedAudio by remember { mutableStateOf<Int?>(null) }
@@ -98,7 +107,11 @@ class MainActivity : ComponentActivity() {
                 }
                 var showSearch by remember { mutableStateOf(false) }
                 var selectedFolder by remember { mutableStateOf<MediaKind?>(null) }
-                val atHome = detailKind == null && selectedVideo == null && selectedAudio == null && selectedImage == null && selectedPreview == null && selectedFolder == null && !showSettings && !showSearch
+                var selectedPerformersFolder by remember { mutableStateOf(false) }
+                var selectedPerformerId by remember { mutableStateOf<Int?>(null) }
+                var selectedPerformerName by remember { mutableStateOf<String?>(null) }
+                var selectedPerformerImage by remember { mutableStateOf<String?>(null) }
+                val atHome = detailKind == null && selectedVideo == null && selectedAudio == null && selectedImage == null && selectedPreview == null && selectedFolder == null && !selectedPerformersFolder && selectedPerformerId == null && !showSettings && !showSearch
                 LaunchedEffect(atHome) { backCallback.isEnabled = atHome }
                 var showSplash by remember { mutableStateOf(true) }
                 val infiniteTransition = rememberInfiniteTransition(label = "logo")
@@ -150,10 +163,26 @@ class MainActivity : ComponentActivity() {
                             detailId = null
                         })
                     }
-                    selectedPreview != null -> PlayerScreen(url!!, token ?: "", "preview", selectedPreview!!, 0L) { SoundManager.playBack(); selectedPreview = null }
-                    selectedVideo != null -> PlayerScreen(url!!, token ?: "", "video", selectedVideo!!, selectedStartPosition) { SoundManager.playBack(); selectedVideo = null; selectedStartPosition = 0L }
-                    selectedAudio != null -> PlayerScreen(url!!, token ?: "", "audio", selectedAudio!!, 0L) { SoundManager.playBack(); selectedAudio = null }
+                    selectedPreview != null -> PlayerScreen(url!!, token ?: "", "preview", selectedPreview!!, 0L, onBack = { SoundManager.playBack(); selectedPreview = null }, onOpenDetail = { detailKind = MediaKind.VIDEO; detailId = selectedPreview; selectedPreview = null }, onOpenPerformer = { id, name, img -> selectedPerformerId = id; selectedPerformerName = name; selectedPerformerImage = img; selectedPreview = null })
+                    selectedVideo != null -> PlayerScreen(url!!, token ?: "", "video", selectedVideo!!, selectedStartPosition, onBack = { SoundManager.playBack(); selectedVideo = null; selectedStartPosition = 0L }, onOpenDetail = { detailKind = MediaKind.VIDEO; detailId = selectedVideo; selectedVideo = null; selectedStartPosition = 0L }, onOpenPerformer = { id, name, img -> selectedPerformerId = id; selectedPerformerName = name; selectedPerformerImage = img; selectedVideo = null; selectedStartPosition = 0L })
+                    selectedAudio != null -> PlayerScreen(url!!, token ?: "", "audio", selectedAudio!!, 0L, onBack = { SoundManager.playBack(); selectedAudio = null }, onOpenDetail = { detailKind = MediaKind.AUDIO; detailId = selectedAudio; selectedAudio = null }, onOpenPerformer = { id, name, img -> selectedPerformerId = id; selectedPerformerName = name; selectedPerformerImage = img; selectedAudio = null })
                     selectedImage != null -> ImageScreen(url!!, token ?: "", selectedImage!!) { SoundManager.playBack(); selectedImage = null }
+                    selectedPerformerId != null -> {
+                        val vm = PerformerDetailViewModel(application, selectedPerformerId!!, selectedPerformerName, selectedPerformerImage)
+                        PerformerDetailScreen(vm, url ?: "", token ?: "", onBack = { selectedPerformerId = null; selectedPerformerName = null; selectedPerformerImage = null }) { card ->
+                            SoundManager.playClick()
+                            when (card.kind) {
+                                MediaKind.VIDEO -> { detailKind = MediaKind.VIDEO; detailId = card.id }
+                                MediaKind.AUDIO -> { detailKind = MediaKind.AUDIO; detailId = card.id }
+                                MediaKind.IMAGE -> { detailKind = MediaKind.IMAGE; detailId = card.id }
+                                MediaKind.GALLERY -> { detailKind = MediaKind.GALLERY; detailId = card.id }
+                            }
+                        }
+                    }
+                    selectedPerformersFolder -> {
+                        val vm = PerformerListViewModel(application)
+                        PerformerListScreen(vm, url ?: "", token ?: "", onBack = { selectedPerformersFolder = false }, onOpenPerformer = { id, name, img -> selectedPerformerId = id; selectedPerformerName = name; selectedPerformerImage = img })
+                    }
                     selectedFolder != null -> {
                         val kind = selectedFolder!!
                         val vm = MediaListViewModel(application, kind)
@@ -188,6 +217,8 @@ class MainActivity : ComponentActivity() {
                         HomeScreen(homeVm, url ?: "", token ?: "",
                             onOpenItem = { kind, id -> SoundManager.playClick(); detailKind = kind; detailId = id },
                             onOpenFolder = { kind -> selectedFolder = kind },
+                            onOpenPerformersFolder = { selectedPerformersFolder = true },
+                            onOpenPerformer = { id: Int, name: String?, img: String? -> selectedPerformerId = id; selectedPerformerName = name; selectedPerformerImage = img },
                             onSettingsClick = { showSettings = true },
                             onSearchClick = { showSearch = true })
                     }

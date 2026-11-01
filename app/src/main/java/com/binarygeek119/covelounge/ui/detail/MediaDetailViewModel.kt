@@ -29,6 +29,8 @@ class MediaDetailViewModel(app: Application, val kind: MediaKind, val id: Int) :
 
     private val _rating = MutableStateFlow<Int?>(null)
     val rating: StateFlow<Int?> = _rating
+    private val _mediaInfo = MutableStateFlow<String?>(null)
+    val mediaInfo: StateFlow<String?> = _mediaInfo
 
     private val _isFavorite = MutableStateFlow(false)
     val isFavorite: StateFlow<Boolean> = _isFavorite
@@ -99,6 +101,27 @@ class MediaDetailViewModel(app: Application, val kind: MediaKind, val id: Int) :
         }
     }
 
+
+    private fun buildMediaInfo(dto: com.binarygeek119.covelounge.data.network.VideoDto): String? {
+        val parts = mutableListOf<String>()
+        val file = dto.files?.firstOrNull()
+        file?.duration?.let { d ->
+            if (d > 0) {
+                val mins = (d / 60).toInt()
+                val secs = (d % 60).toInt()
+                parts.add(if (mins > 0) "${mins}m ${secs}s" else "${secs}s")
+            }
+        }
+        val container = file?.container ?: dto.container
+        container?.let { parts.add(it.uppercase()) }
+        val res = file?.let { f ->
+            if (f.width != null && f.height != null) "${f.width}x${f.height}" else dto.resolution
+        } ?: dto.resolution
+        res?.let { parts.add(it) }
+        dto.studio?.let { parts.add(it) }
+        return if (parts.isEmpty()) null else parts.joinToString(" • ")
+    }
+
     fun init(serverUrl: String?, authToken: String?) {
         if (serverUrl == null || authToken == null) return
         if (api != null) return
@@ -123,7 +146,8 @@ class MediaDetailViewModel(app: Application, val kind: MediaKind, val id: Int) :
                             if (url.contains("access_token=")) url else "$url${if (url.contains("?")) "&" else "?"}access_token=$token"
                         } ?: "$baseUrl/api/stream/video/$id/screenshot?access_token=$token"
                         _performers.value = dto.performers ?: emptyList()
-                        _rating.value = dto.rating
+                        _rating.value = _rating.value ?: dto.rating
+                        _mediaInfo.value = buildMediaInfo(dto)
                         // resumeTime fetched via fetchEngagement()
                     }
                     MediaKind.AUDIO -> {
@@ -134,20 +158,20 @@ class MediaDetailViewModel(app: Application, val kind: MediaKind, val id: Int) :
                             val url = if (p.startsWith("http")) p else "$baseUrl${if (p.startsWith("/")) p else "/$p"}"
                             if (url.contains("access_token=")) url else "$url${if (url.contains("?")) "&" else "?"}access_token=$token"
                         } ?: "$baseUrl/api/audios/$id/image?max=256&access_token=$token"
-                        _rating.value = dto.rating
+                        _rating.value = _rating.value ?: dto.rating
                     }
                     MediaKind.IMAGE -> {
                         val dto = a.imageDetail(id)
                         _title.value = dto.title
                         _details.value = dto.details
                         _posterUrl.value = "$baseUrl/api/stream/image/$id?max=512&access_token=$token"
-                        _rating.value = dto.rating
+                        _rating.value = _rating.value ?: dto.rating
                     }
                     MediaKind.GALLERY -> {
                         val dto = a.galleryDetail(id)
                         _title.value = dto.title
                         _posterUrl.value = "$baseUrl/api/galleries/$id/cover?access_token=$token"
-                        _rating.value = dto.rating
+                        _rating.value = _rating.value ?: dto.rating
                     }
                 }
             } catch (_: Exception) {}

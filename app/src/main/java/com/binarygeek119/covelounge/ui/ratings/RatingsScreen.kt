@@ -4,6 +4,7 @@ import android.app.Application
 import android.view.KeyEvent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -47,7 +48,8 @@ fun RatingsScreen(
     token: String,
     type: String,
     id: Int,
-    onExit: () -> Unit
+    onExit: () -> Unit,
+    onConfirm: () -> Unit = onExit
 ) {
     val context = LocalContext.current
     val app = context.applicationContext as Application
@@ -64,6 +66,10 @@ fun RatingsScreen(
     // Star focus state
     val starFocusRequesters = remember { List(5) { FocusRequester() } }
     var focusedStarIndex by remember { mutableStateOf(0) }
+    var likeFocused by remember { mutableStateOf(false) }
+    var favFocused by remember { mutableStateOf(false) }
+    var confirmFocused by remember { mutableStateOf(false) }
+    var exitFocused by remember { mutableStateOf(false) }
 
     LaunchedEffect(api, hostType, id) {
         try {
@@ -111,7 +117,7 @@ fun RatingsScreen(
     }
 
     Column(
-        modifier = Modifier.fillMaxSize().padding(32.dp),
+        modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.85f)).padding(32.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
@@ -128,7 +134,17 @@ fun RatingsScreen(
                         .onFocusChanged { focused ->
                             if (focused.isFocused) focusedStarIndex = i
                         }
+                        .onPreviewKeyEvent { event ->
+                            if (event.nativeKeyEvent.action == android.view.KeyEvent.ACTION_DOWN &&
+                                (event.nativeKeyEvent.keyCode == android.view.KeyEvent.KEYCODE_DPAD_CENTER ||
+                                 event.nativeKeyEvent.keyCode == android.view.KeyEvent.KEYCODE_ENTER ||
+                                 event.nativeKeyEvent.keyCode == android.view.KeyEvent.KEYCODE_NUMPAD_ENTER)) {
+                                onStarClick(starIndex)
+                                true
+                            } else false
+                        }
                         .background(if (isFocused) Color(0xFF2196F3) else Color.Transparent, CircleShape)
+                        .focusable()
                         .clickable(
                             interactionSource = remember { MutableInteractionSource() },
                             indication = null
@@ -147,30 +163,58 @@ fun RatingsScreen(
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
             Icon(Icons.Filled.ThumbUp, contentDescription = "Like", tint = Color.White)
             Text("Likes: $likeCount", color = Color.White)
-            Button(onClick = {
-                scope.launch {
-                    try {
-                        val c = if (type == "audio") api.likeAudio(id) else api.likeVideo(id)
-                        likeCountState.value = c
-                    } catch (_: Exception) {}
-                }
-            }) { Text("Like") }
+            Button(
+                onClick = {
+                    scope.launch {
+                        try {
+                            val c = if (type == "audio") api.likeAudio(id) else api.likeVideo(id)
+                            likeCountState.value = c
+                        } catch (_: Exception) {}
+                    }
+                },
+                colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                    containerColor = if (likeFocused) Color(0xFF2196F3) else Color.Transparent,
+                    contentColor = Color.White
+                ),
+                modifier = Modifier.onFocusChanged { likeFocused = it.isFocused }
+            ) { Text("Like") }
         }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
             Text("Favorite", color = Color.White)
-            Button(onClick = { isFavoriteState.value = !isFavoriteState.value }) { Text(if (isFavorite) "On" else "Off") }
+            Button(
+                onClick = { isFavoriteState.value = !isFavoriteState.value },
+                colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                    containerColor = if (favFocused) Color(0xFF2196F3) else Color.Transparent,
+                    contentColor = Color.White
+                ),
+                modifier = Modifier.onFocusChanged { favFocused = it.isFocused }
+            ) { Text(if (isFavorite) "On" else "Off") }
         }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Button(onClick = {
-                scope.launch {
-                    try {
-                        api.setRating(hostType, id, com.binarygeek119.covelounge.data.network.VideoRatingDto(ratingState.value))
-                        api.setFavorite(hostType, id, com.binarygeek119.covelounge.data.network.EntityFavoriteDto(isFavoriteState.value))
-                    } catch (_: Exception) {}
-                    onExit()
-                }
-            }) { Text("Confirm") }
-            Button(onClick = onExit) { Text("Exit") }
+            Button(
+                onClick = {
+                    scope.launch {
+                        try {
+                            api.setRating(hostType, id, com.binarygeek119.covelounge.data.network.VideoRatingDto(ratingState.value))
+                            api.setFavorite(hostType, id, com.binarygeek119.covelounge.data.network.EntityFavoriteDto(isFavoriteState.value))
+                        } catch (_: Exception) {}
+                        onConfirm()
+                    }
+                },
+                colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                    containerColor = if (confirmFocused) Color(0xFF2196F3) else Color.Transparent,
+                    contentColor = Color.White
+                ),
+                modifier = Modifier.onFocusChanged { confirmFocused = it.isFocused }
+            ) { Text("Confirm") }
+            Button(
+                onClick = onExit,
+                colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                    containerColor = if (exitFocused) Color(0xFF2196F3) else Color.Transparent,
+                    contentColor = Color.White
+                ),
+                modifier = Modifier.onFocusChanged { exitFocused = it.isFocused }
+            ) { Text("Exit") }
         }
     }
 }

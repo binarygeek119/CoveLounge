@@ -45,7 +45,6 @@ fun SearchScreen(
     BackHandler { onBack() }
     var filter by remember { mutableStateOf("All") }
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-        Text("Back", color = Color.White, modifier = Modifier.clickable { onBack() }.padding(bottom = 8.dp))
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             OutlinedTextField(value = query, onValueChange = { query = it }, label = { Text("Search") }, modifier = Modifier.weight(1f))
             TextButton(onClick = { viewModel.search(query) }) { Text("Go") }

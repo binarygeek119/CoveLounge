@@ -52,13 +52,20 @@ data class VideoDto(
     val imagePath: String? = null,
     val performers: List<PerformerSummaryDto>? = null,
     val rating: Int? = null,
-    val files: List<VideoFileDto>? = null
+    val files: List<VideoFileDto>? = null,
+    val studio: String? = null,
+    val container: String? = null,
+    val resolution: String? = null
 )
 
 @Serializable
 data class VideoFileDto(
     val id: Int = 0,
-    val duration: Double = 0.0
+    val duration: Double = 0.0,
+    val container: String? = null,
+    val videoCodec: String? = null,
+    val width: Int? = null,
+    val height: Int? = null
 )
 
 @Serializable
@@ -83,6 +90,40 @@ data class GalleryDto(
     val id: Int,
     val title: String? = null,
     val rating: Int? = null
+)
+
+@Serializable
+data class LoungeAppDto(
+    val id: String = "",
+    val label: String? = null,
+    val serverUrl: String? = null,
+    val apiKey: String? = null,
+    val resetCodeHash: String? = null,
+    val resetCodeExpiresAt: String? = null,
+    val resetApproved: Boolean = false
+)
+
+@Serializable
+data class LoungeResetCodeResponse(
+    val code: String = "",
+    val expiresAt: String? = null
+)
+
+@Serializable
+data class LoungeResetVerifyResponse(
+    val ok: Boolean = false,
+    val error: String? = null
+)
+
+@Serializable
+data class LoungeRegisterResetResponse(
+    val ok: Boolean = false,
+    val error: String? = null
+)
+
+@Serializable
+data class LoungeResetStatusResponse(
+    val approved: Boolean = false
 )
 
 interface CoveApi {
@@ -161,6 +202,21 @@ interface CoveApi {
     @POST("images/{id}/like")
     suspend fun likeImage(@retrofit2.http.Path("id") id: Int): Int
 
+    @GET("plugins/com.binarygeek119.cove-lounge/apps")
+    suspend fun loungeApps(): List<LoungeAppDto>
+
+    @GET("plugins/com.binarygeek119.cove-lounge/apps/{appId}/reset-code")
+    suspend fun loungeResetCode(@retrofit2.http.Path("appId") appId: String): LoungeResetCodeResponse
+
+    @POST("plugins/com.binarygeek119.cove-lounge/reset/verify")
+    suspend fun loungeResetVerify(@Body body: Map<String, String>): LoungeResetVerifyResponse
+
+    @POST("plugins/com.binarygeek119.cove-lounge/reset/register")
+    suspend fun loungeRegisterReset(@Body body: Map<String, String>): LoungeRegisterResetResponse
+
+    @GET("plugins/com.binarygeek119.cove-lounge/reset/status")
+    suspend fun loungeResetStatus(): LoungeResetStatusResponse
+
     @GET("engagement/{hostType}/{id}")
     suspend fun getEngagement(
         @retrofit2.http.Path("hostType") hostType: String,
@@ -186,8 +242,12 @@ interface CoveApi {
         @Query("page") page: Int = 1,
         @Query("perPage") perPage: Int = 30,
         @Query("sort") sort: String? = null,
-        @Query("direction") direction: String? = null
+        @Query("direction") direction: String? = null,
+        @Query("q") q: String? = null
     ): PaginatedResponse<PerformerDto>
+
+    @GET("performers/{id}")
+    suspend fun performerDetail(@retrofit2.http.Path("id") id: Int): PerformerDto
 }
 
 @Serializable
@@ -207,7 +267,19 @@ data class EntityFavoriteDto(val isFavorite: Boolean)
 data class PerformerDto(
     val id: Int = 0,
     val name: String? = null,
-    val imagePath: String? = null
+    val imagePath: String? = null,
+    val gender: String? = null,
+    val born: String? = null,
+    val country: String? = null,
+    val ethnicity: String? = null,
+    val height: String? = null,
+    val measurements: String? = null,
+    val eyeColor: String? = null,
+    val hairColor: String? = null,
+    val fakeTits: String? = null,
+    val tattoos: String? = null,
+    val piercings: String? = null,
+    val career: String? = null
 )
 
 @Serializable

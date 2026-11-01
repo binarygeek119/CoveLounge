@@ -16,6 +16,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -39,6 +42,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -58,6 +62,7 @@ import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
@@ -74,7 +79,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @Composable
-fun PlayerScreen(baseUrl: String, token: String, type: String, id: Int, startPosition: Long = 0L, onBack: () -> Unit) {
+fun PlayerScreen(baseUrl: String, token: String, type: String, id: Int, startPosition: Long = 0L, onBack: () -> Unit, onOpenDetail: () -> Unit = {}, onOpenPerformer: (Int, String?, String?) -> Unit = { _, _, _ -> }) {
     val context = LocalContext.current
     val app = context.applicationContext as Application
     val api = remember(baseUrl, token) { SessionRepository(com.binarygeek119.covelounge.data.ServerStore(app)).createApi(baseUrl, token) }
@@ -94,6 +99,8 @@ fun PlayerScreen(baseUrl: String, token: String, type: String, id: Int, startPos
     }
 
     var showGearMenu by remember { mutableStateOf(false) }
+    var controlsVisible by remember { mutableStateOf(true) }
+    var lastInput by remember { mutableStateOf(System.currentTimeMillis()) }
     var showRatings by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     val gearFr = remember { FocusRequester() }
@@ -117,10 +124,13 @@ fun PlayerScreen(baseUrl: String, token: String, type: String, id: Int, startPos
     var viewCount by remember { mutableStateOf(0) }
     var title by remember { mutableStateOf<String?>(null) }
     var performers by remember { mutableStateOf<List<com.binarygeek119.covelounge.data.network.PerformerSummaryDto>>(emptyList()) }
+    var focusedPerformer by remember { mutableStateOf(-1) }
+    val performerFrs = remember { mutableStateListOf<FocusRequester>() }
     var position by remember { mutableStateOf(0L) }
     var duration by remember { mutableStateOf(0L) }
     var spriteBitmap by remember { mutableStateOf<Bitmap?>(null) }
     var initialSeekDone by remember { mutableStateOf(false) }
+    var initialJumpDone by remember { mutableStateOf(false) }
     var isScrubbing by remember { mutableStateOf(false) }
     var previewBitmap by remember { mutableStateOf<Bitmap?>(null) }
     var sliderWidth by remember { mutableStateOf(0) }
@@ -175,6 +185,14 @@ fun PlayerScreen(baseUrl: String, token: String, type: String, id: Int, startPos
         }
     }
 
+    LaunchedEffect(showRatings) { if (showRatings) controlsVisible = false }
+    LaunchedEffect(lastInput) {
+        delay(5000)
+        if (System.currentTimeMillis() - lastInput >= 5000) {
+            controlsVisible = false
+            runCatching { playbackFr.requestFocus() }
+        }
+    }
     val player = remember { ExoPlayer.Builder(context).build() }
     DisposableEffect(Unit) { onDispose { player.release() } }
 
@@ -196,6 +214,24 @@ fun PlayerScreen(baseUrl: String, token: String, type: String, id: Int, startPos
             }
         }
     }
+    LaunchedEffect(player) {
+        player.addListener(object : Player.Listener {
+            override fun onPlaybackStateChanged(state: Int) {
+                if (state == Player.STATE_READY && !initialJumpDone && startPosition == 0L && type != "preview" && type != "audio") {
+                    initialJumpDone = true
+                    val durSec = (player.duration / 1000).toInt()
+                    val startSec = when {
+                        durSec < 120 -> 0
+                        durSec > 3600 -> 1200
+                        durSec > 1800 -> 300
+                        durSec > 900 -> 180
+                        else -> 20
+                    }
+                    if (startSec > 0) player.seekTo(startSec * 1000L)
+                }
+            }
+        })
+    }
     LaunchedEffect(url) {
         player.setMediaItem(MediaItem.fromUri(Uri.parse(url)))
         player.prepare()
@@ -212,6 +248,9 @@ fun PlayerScreen(baseUrl: String, token: String, type: String, id: Int, startPos
         Modifier
             .fillMaxSize()
             .onPreviewKeyEvent { event ->
+                if (showRatings) return@onPreviewKeyEvent false
+                controlsVisible = true
+                lastInput = System.currentTimeMillis()
                                 if (event.nativeKeyEvent.action != KeyEvent.ACTION_DOWN) false
                 else when (event.nativeKeyEvent.keyCode) {
                     KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER -> {
@@ -227,17 +266,36 @@ fun PlayerScreen(baseUrl: String, token: String, type: String, id: Int, startPos
                         }
                     }
                     KeyEvent.KEYCODE_DPAD_UP -> {
-                        if (sliderFocused || playPauseFocused || rewindFocused || forwardFocused || heartFocused || thumbFocused || gearFocused) {
-                            runCatching { playbackFr.requestFocus() }; true
-                        } else {
-                            showGearMenu = true; true
+                        when {
+                            playPauseFocused || rewindFocused || forwardFocused || heartFocused || thumbFocused || gearFocused -> {
+                                runCatching { sliderFr.requestFocus() }; true
+                            }
+                            sliderFocused -> {
+                                if (performers.isNotEmpty() && performerFrs.isNotEmpty()) runCatching { performerFrs[0].requestFocus() }
+                                true
+                            }
+                            focusedPerformer >= 0 -> true
+                            playbackFocused -> {
+                                runCatching { playPauseFr.requestFocus() }; true
+                            }
+                            else -> {
+                                runCatching { playPauseFr.requestFocus() }; true
+                            }
                         }
                     }
                     KeyEvent.KEYCODE_DPAD_DOWN -> {
-                        if (playbackFocused) {
-                            runCatching { sliderFr.requestFocus() }
-                            true
-                        } else false
+                        when {
+                            focusedPerformer >= 0 -> {
+                                runCatching { sliderFr.requestFocus() }; true
+                            }
+                            sliderFocused -> {
+                                runCatching { playPauseFr.requestFocus() }; true
+                            }
+                            playPauseFocused || rewindFocused || forwardFocused || heartFocused || thumbFocused || gearFocused -> {
+                                runCatching { playbackFr.requestFocus() }; true
+                            }
+                            else -> false
+                        }
                     }
                     KeyEvent.KEYCODE_DPAD_LEFT -> {
                         if (playbackFocused || sliderFocused) {
@@ -294,7 +352,13 @@ fun PlayerScreen(baseUrl: String, token: String, type: String, id: Int, startPos
                 else -> {
                     val dto = api.videoDetail(id)
                     title = dto.title
-                    performers = dto.performers ?: emptyList()
+                    val cached = PlayerPerformerCache.get(id)
+                    if (cached != null) {
+                        performers = cached
+                    } else {
+                        performers = dto.performers ?: emptyList()
+                        PlayerPerformerCache.put(id, performers)
+                    }
                     val d = dto.files?.firstOrNull()?.duration ?: 0.0
                     if (d > 0) duration = (d * 1000).toLong()
                 }
@@ -302,15 +366,17 @@ fun PlayerScreen(baseUrl: String, token: String, type: String, id: Int, startPos
         } catch (_: Exception) {}
     }
 
-    // Title at top-left
-    title?.let {
-        Text(
-            text = it,
-            color = Color.White,
-            modifier = Modifier
-                .align(Alignment.TopStart)
-                .padding(24.dp)
-        )
+    // Title at top-left (only while controls are visible)
+    if (controlsVisible) {
+        title?.let {
+            Text(
+                text = it,
+                color = Color.White,
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .padding(24.dp)
+            )
+        }
     }
 
     // Invisible focus holder for "playback mode": while focused, D-pad seeks/plays.
@@ -321,7 +387,40 @@ fun PlayerScreen(baseUrl: String, token: String, type: String, id: Int, startPos
                 .onFocusChanged { playbackFocused = it.isFocused }
                 .focusable()
         )
+        // Performer metadata panel on the right when a performer icon is focused
+        if (focusedPerformer in performers.indices && controlsVisible) {
+            val perf = performers[focusedPerformer]
+            Box(
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
+                    .fillMaxHeight()
+                    .fillMaxWidth(0.32f)
+                    .background(
+                        brush = androidx.compose.ui.graphics.Brush.horizontalGradient(
+                            colorStops = arrayOf(
+                                0.0f to androidx.compose.ui.graphics.Color.Transparent,
+                                0.2f to androidx.compose.ui.graphics.Color.Transparent,
+                                0.4f to Color(0x992196F3),
+                                1.0f to Color(0xDD2196F3)
+                            )
+                        )
+                    )
+                    .padding(16.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    AsyncImage(
+                        model = "$baseUrl/api/performers/${perf.id}/image?max=256&access_token=$token",
+                        contentDescription = perf.name,
+                        modifier = Modifier.width(120.dp).height(213.dp).clip(androidx.compose.foundation.shape.RoundedCornerShape(8.dp)),
+                        contentScale = ContentScale.Crop
+                    )
+                    Text(perf.name ?: "Performer", color = Color.White, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 8.dp))
+                }
+            }
+        }
         // Custom control panel: seek bar on top, buttons below
+        if (controlsVisible) {
         Column(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
@@ -330,19 +429,30 @@ fun PlayerScreen(baseUrl: String, token: String, type: String, id: Int, startPos
         ) {
             // Performer images: lower-left, above seek bar, remote-navigable
             if (performers.isNotEmpty()) {
-                var focusedPerformer by remember { mutableStateOf(-1) }
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
+                    while (performerFrs.size < performers.size) performerFrs.add(FocusRequester())
                     performers.forEachIndexed { idx, perf ->
                         Box(
                             modifier = Modifier
-                                .size(56.dp)
+                                .focusRequester(performerFrs[idx])
                                 .onFocusChanged { if (it.isFocused) focusedPerformer = idx else if (focusedPerformer == idx) focusedPerformer = -1 }
+                                .size(56.dp)
+                                .focusable()
                                 .background(if (focusedPerformer == idx) Color(0xFF2196F3) else Color(0x33FFFFFF), androidx.compose.foundation.shape.CircleShape)
-                                .clickable { /* navigate to performer page (later) */ }
+                                .onPreviewKeyEvent { event ->
+                                    if (event.nativeKeyEvent.action == android.view.KeyEvent.ACTION_DOWN &&
+                                        (event.nativeKeyEvent.keyCode == android.view.KeyEvent.KEYCODE_DPAD_CENTER ||
+                                         event.nativeKeyEvent.keyCode == android.view.KeyEvent.KEYCODE_ENTER ||
+                                         event.nativeKeyEvent.keyCode == android.view.KeyEvent.KEYCODE_NUMPAD_ENTER)) {
+                                        onOpenPerformer(perf.id, perf.name, "$baseUrl/api/performers/${perf.id}/image?max=128&access_token=$token")
+                                        true
+                                    } else false
+                                }
+                                .clickable { onOpenPerformer(perf.id, perf.name, "$baseUrl/api/performers/${perf.id}/image?max=128&access_token=$token") }
                                 .padding(4.dp),
                             contentAlignment = Alignment.Center
                         ) {
@@ -355,6 +465,13 @@ fun PlayerScreen(baseUrl: String, token: String, type: String, id: Int, startPos
                         }
                     }
                 }
+            }
+            if (focusedPerformer in performers.indices) {
+                Text(
+                    text = performers[focusedPerformer].name ?: "Performer",
+                    color = Color.White,
+                    modifier = Modifier.padding(top = 4.dp)
+                )
             }
             Box(modifier = Modifier.fillMaxWidth().onGloballyPositioned { sliderWidth = it.size.width }) {
                 if (isScrubbing && previewBitmap != null) {
@@ -474,6 +591,7 @@ fun PlayerScreen(baseUrl: String, token: String, type: String, id: Int, startPos
                 }
             }
         }
+        }
     }
 
     if (showRatings) {
@@ -482,7 +600,8 @@ fun PlayerScreen(baseUrl: String, token: String, type: String, id: Int, startPos
             token = token,
             type = type,
             id = id,
-            onExit = { showRatings = false; onBack() }
+            onExit = { showRatings = false; onBack() },
+            onConfirm = { showRatings = false; onOpenDetail() }
         )
     }
 

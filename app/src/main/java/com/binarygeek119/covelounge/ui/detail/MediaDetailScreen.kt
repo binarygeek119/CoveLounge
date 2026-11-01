@@ -3,6 +3,7 @@ package com.binarygeek119.covelounge.ui.detail
 import android.view.KeyEvent
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -13,6 +14,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -64,6 +67,7 @@ fun MediaDetailScreen(
     val likeCount by viewModel.likeCount.collectAsState()
     val isFavorite by viewModel.isFavorite.collectAsState()
     val rating by viewModel.rating.collectAsState()
+    val mediaInfo by viewModel.mediaInfo.collectAsState()
     val performers by viewModel.performers.collectAsState()
     val resumeTime by viewModel.resumeTime.collectAsState()
     val playFr = remember { FocusRequester() }
@@ -79,16 +83,25 @@ fun MediaDetailScreen(
     val performersFr = remember { FocusRequester() }
     var performersFocused by remember { mutableStateOf(false) }
     var performerOffset by remember { mutableStateOf(0) }
-    // Start remote focus on the play control so the media item is selectable right away
-    LaunchedEffect(Unit) {
+    var focusedPerformerIndex by remember { mutableStateOf(0) }
+    var performersHasFocus by remember { mutableStateOf(false) }
+    val performerFrs = remember { androidx.compose.runtime.mutableStateListOf<FocusRequester>() }
+    val detailsScrollState = rememberScrollState()
+    val detailsFr = remember { FocusRequester() }
+    var detailsFocused by remember { mutableStateOf(false) }
+    // Start remote focus on the play/resume control (resume takes priority)
+    var detailFocusedOnce by remember { mutableStateOf(false) }
+    LaunchedEffect(resumeTime) {
+        if (detailFocusedOnce) return@LaunchedEffect
+        kotlinx.coroutines.delay(200)
+        val target = if (resumeTime > 0) circlePlayFr else playFr
         repeat(10) {
-            if (runCatching { playFr.requestFocus() }.isSuccess) return@LaunchedEffect
+            if (runCatching { target.requestFocus() }.isSuccess) { detailFocusedOnce = true; return@LaunchedEffect }
             kotlinx.coroutines.delay(100)
         }
     }
     BackHandler { onBack() }
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-        Text("Back", color = Color.White, modifier = Modifier.clickable { onBack() }.padding(bottom = 8.dp))
         Row(modifier = Modifier.fillMaxSize()) {
             posterUrl?.let {
                 AsyncImage(model = it, contentDescription = title, modifier = Modifier.weight(1f).fillMaxSize().clip(RoundedCornerShape(8.dp)), contentScale = ContentScale.Crop)
@@ -111,6 +124,7 @@ fun MediaDetailScreen(
                                     } else false
                                 }
                                 .background(if (circlePlayFocused) Color(0xFF2196F3) else Color(0x33FFFFFF), CircleShape)
+                                .then(if (circlePlayFocused) Modifier.border(3.dp, Color(0xFF2196F3), CircleShape) else Modifier)
                                 .clickable { viewModel.recordPlay(); onPlay((resumeTime * 1000).toLong()) }
                                 .padding(12.dp),
                             contentAlignment = Alignment.Center
@@ -132,11 +146,13 @@ fun MediaDetailScreen(
                                 if (event.nativeKeyEvent.action == KeyEvent.ACTION_DOWN) {
                                     when (event.nativeKeyEvent.keyCode) {
                                         KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER -> { viewModel.recordPlay(); onPlay(0L); true }
+                                        KeyEvent.KEYCODE_DPAD_DOWN -> { runCatching { performerFrs.getOrElse(0) { FocusRequester() }.requestFocus() }; true }
                                         else -> false
                                     }
                                 } else false
                             }
                             .background(if (playFocused) Color(0xFF2196F3) else Color(0x33FFFFFF), CircleShape)
+                            .then(if (playFocused) Modifier.border(3.dp, Color(0xFF2196F3), CircleShape) else Modifier)
                             .clickable { viewModel.recordPlay(); onPlay(0L) }
                             .padding(12.dp),
                         contentAlignment = Alignment.Center
@@ -163,6 +179,7 @@ fun MediaDetailScreen(
                                 } else false
                             }
                             .background(if (previewFocused) Color(0xFF2196F3) else Color(0x33FFFFFF), CircleShape)
+                            .then(if (previewFocused) Modifier.border(3.dp, Color(0xFF2196F3), CircleShape) else Modifier)
                             .clickable { onPreview() }
                             .padding(12.dp),
                         contentAlignment = Alignment.Center
@@ -189,6 +206,7 @@ fun MediaDetailScreen(
                                 } else false
                             }
                             .background(if (likeFocused) Color(0xFF2196F3) else Color(0x33FFFFFF), CircleShape)
+                            .then(if (likeFocused) Modifier.border(3.dp, Color(0xFF2196F3), CircleShape) else Modifier)
                             .clickable { viewModel.like() }
                             .padding(12.dp),
                         contentAlignment = Alignment.Center
@@ -216,6 +234,7 @@ fun MediaDetailScreen(
                                 } else false
                             }
                             .background(if (heartFocused) Color(0xFF2196F3) else Color(0x33FFFFFF), CircleShape)
+                            .then(if (heartFocused) Modifier.border(3.dp, Color(0xFF2196F3), CircleShape) else Modifier)
                             .clickable { viewModel.toggleFavorite() }
                             .padding(12.dp),
                         contentAlignment = Alignment.Center
@@ -223,84 +242,154 @@ fun MediaDetailScreen(
                         Icon(
                             Icons.Filled.Favorite,
                             contentDescription = "Favorite",
-                            tint = if (heartFocused) Color(0xFF2196F3) else if (isFavorite) Color(0xFFFF4081) else Color.White,
+                            tint = if (heartFocused) Color.White else if (isFavorite) Color(0xFFFF4081) else Color.White,
                             modifier = Modifier.size(32.dp)
                         )
                     }
                 }
-                // Rating row (visual only)
-                rating?.let { r ->
-                    val normalized = if (r <= 5) r * 20 else r
-                    val stars = normalized / 20.0
-                    Row(modifier = Modifier.padding(top = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-                        for (i in 0 until 5) {
-                            val threshold = i + 1
-                            val icon = when {
-                                stars >= threshold -> Icons.Filled.Star
-                                stars >= threshold - 0.5 -> Icons.Filled.StarHalf
-                                else -> Icons.Filled.StarBorder
-                            }
-                            Icon(
-                                imageVector = icon,
-                                contentDescription = null,
-                                tint = Color(0xFFFFC107),
-                                modifier = Modifier.size(24.dp)
-                            )
+                // Rating row (visual only) - always show 5 stars (empty when unrated)
+                val r = rating ?: 0
+                val normalized = if (r <= 5) r * 20 else r
+                val stars = normalized / 20.0
+                Row(modifier = Modifier.padding(top = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+                    for (i in 0 until 5) {
+                        val threshold = i + 1
+                        val icon = when {
+                            stars >= threshold -> Icons.Filled.Star
+                            stars >= threshold - 0.5 -> Icons.Filled.StarHalf
+                            else -> Icons.Filled.StarBorder
                         }
+                        Icon(
+                            imageVector = icon,
+                            contentDescription = null,
+                            tint = Color(0xFFFFC107),
+                            modifier = Modifier.size(24.dp)
+                        )
                     }
                 }
 
-                // Performers row (2 visible, L/R scrolls)
+                mediaInfo?.let { info ->
+                    Text(info, color = Color.LightGray, fontSize = 12.sp, modifier = Modifier.padding(top = 4.dp))
+                }
+
+                // Performers row (2 visible, L/R selects individual performers)
                 if (performers.isNotEmpty()) {
                     val visibleCount = 2
                     val maxOffset = (performers.size - visibleCount).coerceAtLeast(0)
+                    while (performerFrs.size < performers.size) performerFrs.add(FocusRequester())
                     val shown = performers.drop(performerOffset).take(visibleCount)
+                    // keep focused performer visible
+                    if (focusedPerformerIndex < performerOffset) performerOffset = focusedPerformerIndex
+                    if (focusedPerformerIndex >= performerOffset + visibleCount) performerOffset = (focusedPerformerIndex - visibleCount + 1).coerceIn(0, maxOffset)
+                    val shownIndices = (performerOffset until (performerOffset + visibleCount).coerceAtMost(performers.size)).toList()
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 12.dp)) {
+                        shownIndices.forEach { idx ->
+                            val perf = performers[idx]
+                            val isFocused = focusedPerformerIndex == idx
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                modifier = Modifier
+                                    .focusRequester(performerFrs[idx])
+                                    .onFocusChanged { if (it.isFocused) { focusedPerformerIndex = idx; performersHasFocus = true } else if (focusedPerformerIndex == idx) { performersHasFocus = false } }
+                                    .onPreviewKeyEvent { event ->
+                                        if (event.nativeKeyEvent.action == KeyEvent.ACTION_DOWN) {
+                                            when (event.nativeKeyEvent.keyCode) {
+                                                KeyEvent.KEYCODE_DPAD_LEFT -> {
+                                                    if (idx > 0) {
+                                                        focusedPerformerIndex = idx - 1
+                                                        if (focusedPerformerIndex < performerOffset) performerOffset = focusedPerformerIndex
+                                                        runCatching { performerFrs.getOrElse(focusedPerformerIndex) { FocusRequester() }.requestFocus() }
+                                                    }
+                                                    true
+                                                }
+                                                KeyEvent.KEYCODE_DPAD_RIGHT -> {
+                                                    if (idx < performers.size - 1) {
+                                                        focusedPerformerIndex = idx + 1
+                                                        if (focusedPerformerIndex >= performerOffset + visibleCount) performerOffset = (focusedPerformerIndex - visibleCount + 1).coerceIn(0, maxOffset)
+                                                        runCatching { performerFrs.getOrElse(focusedPerformerIndex) { FocusRequester() }.requestFocus() }
+                                                    }
+                                                    true
+                                                }
+                                                KeyEvent.KEYCODE_DPAD_UP -> {
+                                                    performersHasFocus = false
+                                                    runCatching { playFr.requestFocus() }
+                                                    true
+                                                }
+                                                KeyEvent.KEYCODE_DPAD_DOWN -> {
+                                                    performersHasFocus = false
+                                                    runCatching { detailsFr.requestFocus() }
+                                                    true
+                                                }
+                                                KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER -> {
+                                                    // open performer page (to be done later)
+                                                    true
+                                                }
+                                                else -> false
+                                            }
+                                        } else false
+                                    }
+                                    .focusable()
+                                    .then(if (isFocused && performersHasFocus) Modifier.border(3.dp, Color(0xFF2196F3), RoundedCornerShape(8.dp)) else Modifier)
+                                    .clickable { /* open performer page later */ }
+                                    .padding(4.dp)
+                            ) {
+                                AsyncImage(
+                                    model = "$baseUrl/api/performers/${perf.id}/image?max=128&access_token=$token",
+                                    contentDescription = perf.name,
+                                    modifier = Modifier
+                                        .size(72.dp)
+                                        .clip(RoundedCornerShape(8.dp)),
+                                    contentScale = ContentScale.Crop,
+                                    alignment = Alignment.TopCenter
+                                )
+                                Text(perf.name ?: "", color = Color.White, fontSize = 10.sp, maxLines = 1)
+                            }
+                        }
+                    }
+                    // (no auto-focus on load; focus moves only via user navigation)
+                }
+                // Metadata below performers
+                Text(title ?: "Untitled", color = Color.White, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 12.dp))
+                details?.let { d ->
                     Box(
                         modifier = Modifier
-                            .padding(top = 12.dp)
+                            .padding(top = 8.dp)
                             .fillMaxWidth()
-                            .focusRequester(performersFr)
-                            .onFocusChanged { performersFocused = it.isFocused }
+                            .weight(1f)
+                            .focusRequester(detailsFr)
+                            .onFocusChanged { detailsFocused = it.isFocused }
                             .onPreviewKeyEvent { event ->
                                 if (event.nativeKeyEvent.action == KeyEvent.ACTION_DOWN) {
                                     when (event.nativeKeyEvent.keyCode) {
-                                        KeyEvent.KEYCODE_DPAD_LEFT -> {
-                                            if (performerOffset > 0) performerOffset -= 1
-                                            true
+                                        KeyEvent.KEYCODE_DPAD_UP -> {
+                                            if (detailsScrollState.value > 0) {
+                                                detailsScrollState.dispatchRawDelta(-detailsScrollState.value.toFloat())
+                                                true
+                                            } else {
+                                                runCatching { performerFrs.getOrElse(0) { FocusRequester() }.requestFocus() }
+                                                true
+                                            }
                                         }
-                                        KeyEvent.KEYCODE_DPAD_RIGHT -> {
-                                            if (performerOffset < maxOffset) performerOffset += 1
+                                        KeyEvent.KEYCODE_DPAD_DOWN -> {
+                                            if (detailsScrollState.canScrollForward) {
+                                                detailsScrollState.dispatchRawDelta(200f)
+                                                true
+                                            } else true
+                                        }
+                                        KeyEvent.KEYCODE_DPAD_LEFT -> {
+                                            runCatching { performerFrs.getOrElse(0) { FocusRequester() }.requestFocus() }
                                             true
                                         }
                                         else -> false
                                     }
                                 } else false
                             }
-                            .background(if (performersFocused) Color(0x332196F3) else Color.Transparent, RoundedCornerShape(8.dp))
                             .focusable()
-                            .padding(4.dp)
+                            .verticalScroll(detailsScrollState)
                     ) {
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            shown.forEach { perf ->
-                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                    AsyncImage(
-                                        model = "$baseUrl/api/performers/${perf.id}/image?max=128&access_token=$token",
-                                        contentDescription = perf.name,
-                                        modifier = Modifier
-                                            .size(72.dp)
-                                            .clip(RoundedCornerShape(8.dp)),
-                                        contentScale = ContentScale.Crop,
-                                        alignment = Alignment.TopCenter
-                                    )
-                                    Text(perf.name ?: "", color = Color.White, fontSize = 10.sp, maxLines = 1)
-                                }
-                            }
-                        }
+                        Text(d, color = Color.LightGray)
                     }
                 }
-                // Metadata below performers
-                Text(title ?: "Untitled", color = Color.White, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 12.dp))
-                details?.let { Text(it, color = Color.LightGray, modifier = Modifier.padding(top = 8.dp)) }
             }
         }
     }

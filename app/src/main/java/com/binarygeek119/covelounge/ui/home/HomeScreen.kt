@@ -56,6 +56,8 @@ fun HomeScreen(
     token: String,
     onOpenItem: (MediaKind, Int) -> Unit,
     onOpenFolder: (MediaKind) -> Unit,
+    onOpenPerformersFolder: () -> Unit = {},
+    onOpenPerformer: (Int, String?, String?) -> Unit = { _, _, _ -> },
     onSettingsClick: () -> Unit = {},
     onSearchClick: () -> Unit = {}
 ) {
@@ -72,6 +74,7 @@ fun HomeScreen(
     val settingsStore = remember { SettingsStore(context) }
     val previewMode by settingsStore.previewMode.collectAsState(initial = "Off")
     val screenshotInterval by settingsStore.screenshotInterval.collectAsState(initial = 10)
+    val spotlightVolume by settingsStore.spotlightVolume.collectAsState(initial = 3)
 
     var showSettings by remember { mutableStateOf(false) }
     val searchFr = remember { FocusRequester() }
@@ -79,15 +82,7 @@ fun HomeScreen(
     val coverFr = remember { FocusRequester() }
 
     // Initial focus: spotlight center (or Search if no screenshots), so the remote works right away
-    LaunchedEffect(screenshots.isNotEmpty()) {
-        repeat(10) {
-            val ok = runCatching {
-                if (screenshots.isNotEmpty()) coverFr.requestFocus() else searchFr.requestFocus()
-            }.isSuccess
-            if (ok) return@LaunchedEffect
-            kotlinx.coroutines.delay(100)
-        }
-    }
+    // (initial focus set below after focusRequesters are created)
 
     Column(modifier = Modifier.fillMaxSize().background(Color.Black)) {
         if (isLoading) {
@@ -101,17 +96,27 @@ fun HomeScreen(
         }
 
         // Vertical selector area
-        val verticalPagerState = rememberPagerState(pageCount = { if (continueWatching.isNotEmpty()) 6 else 5 })
         val scope = rememberCoroutineScope()
         val rows = buildList {
             if (continueWatching.isNotEmpty()) add(Triple("Continue Watching", continueWatching, MediaKind.VIDEO))
             add(Triple("Videos", recentVideos, MediaKind.VIDEO))
+            if (recentPerformers.isNotEmpty()) add(Triple("Performers", recentPerformers, MediaKind.IMAGE))
             add(Triple("Audios", recentAudios, MediaKind.AUDIO))
             add(Triple("Images", recentImages, MediaKind.IMAGE))
             add(Triple("Galleries", recentGalleries, MediaKind.GALLERY))
-            if (recentPerformers.isNotEmpty()) add(Triple("Performers", recentPerformers, MediaKind.IMAGE))
         }
+        val verticalPagerState = rememberPagerState(pageCount = { rows.size.coerceAtLeast(1) })
         val focusRequesters = remember { List(rows.size) { FocusRequester() } }
+    LaunchedEffect(Unit) {
+        repeat(10) {
+            val ok = runCatching {
+                val firstRowFr = focusRequesters.getOrNull(0)
+                if (firstRowFr != null) firstRowFr.requestFocus() else if (screenshots.isNotEmpty()) coverFr.requestFocus() else searchFr.requestFocus()
+            }.isSuccess
+            if (ok) return@LaunchedEffect
+            kotlinx.coroutines.delay(100)
+        }
+    }
 
         // Spotlight bar (fills top, with logo/settings overlay)
         Box(modifier = Modifier.fillMaxWidth()) {
@@ -131,7 +136,11 @@ fun HomeScreen(
                     previewUrlProvider = { card ->
                         if (card.kind == MediaKind.VIDEO) "$baseUrl/api/stream/video/${card.id}/preview?access_token=$token" else null
                     },
-                    intervalSeconds = screenshotInterval
+                    fullVideoUrlProvider = { card ->
+                        if (card.kind == MediaKind.VIDEO) "$baseUrl/api/stream/video/${card.id}/transcode?resolution=720p&access_token=$token" else null
+                    },
+                    intervalSeconds = screenshotInterval,
+                    volumeLevel = spotlightVolume
                 )
             }
             Row(
@@ -204,7 +213,7 @@ fun HomeScreen(
                                     val target = verticalPagerState.currentPage - 1
                                     scope.launch {
                                         verticalPagerState.animateScrollToPage(target)
-                                        focusRequesters.getOrElse(target) { FocusRequester() }.requestFocus()
+                                        runCatching { focusRequesters.getOrElse(target) { FocusRequester() }.requestFocus() }
                                     }
                                     true
                                 } else {
@@ -216,7 +225,7 @@ fun HomeScreen(
                                     val target = verticalPagerState.currentPage + 1
                                     scope.launch {
                                         verticalPagerState.animateScrollToPage(target)
-                                        focusRequesters.getOrElse(target) { FocusRequester() }.requestFocus()
+                                        runCatching { focusRequesters.getOrElse(target) { FocusRequester() }.requestFocus() }
                                     }
                                     true
                                 } else {
@@ -238,10 +247,10 @@ fun HomeScreen(
                     title = title,
                     items = items,
                     focusRequester = focusRequesters.getOrElse(page) { FocusRequester() },
-                    showFolder = !isPerformers,
+                    showFolder = true,
                     imageAlignment = if (isPerformers) Alignment.TopCenter else Alignment.Center,
                     onFolderClick = {
-                        if (isPerformers) return@MediaRow
+                        if (isPerformers) { onOpenPerformersFolder(); return@MediaRow }
                         when (kind) {
                             MediaKind.VIDEO -> onOpenFolder(MediaKind.VIDEO)
                             MediaKind.AUDIO -> onOpenFolder(MediaKind.AUDIO)
@@ -249,7 +258,7 @@ fun HomeScreen(
                             MediaKind.GALLERY -> onOpenFolder(MediaKind.GALLERY)
                         }
                     },
-                    onItemClick = { card -> if (!isPerformers) onOpenItem(kind, card.id) }
+                    onItemClick = { card -> if (isPerformers) onOpenPerformer(card.id, card.title, card.posterUrl) else onOpenItem(kind, card.id) }
                 )
             }
         }

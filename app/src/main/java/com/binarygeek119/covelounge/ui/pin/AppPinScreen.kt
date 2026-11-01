@@ -10,12 +10,15 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -28,6 +31,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.foundation.Image
+import androidx.compose.ui.res.painterResource
+import com.binarygeek119.covelounge.R
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -35,6 +41,10 @@ import androidx.compose.ui.unit.dp
 import com.binarygeek119.covelounge.data.ServerStore
 import com.binarygeek119.covelounge.data.SessionRepository
 import com.binarygeek119.covelounge.data.SettingsStore
+import com.binarygeek119.covelounge.data.network.CoveApi
+import retrofit2.HttpException
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.Random
@@ -55,8 +65,10 @@ fun AppPinScreen(
     var showError by remember { mutableStateOf(false) }
     var showForgot by remember { mutableStateOf(false) }
     var forgotCode by remember { mutableStateOf<String?>(null) }
+    var forgotAppId by remember { mutableStateOf<String?>(null) }
     var forgotStatus by remember { mutableStateOf("") }
     var isPolling by remember { mutableStateOf(false) }
+    var forgotError by remember { mutableStateOf<String?>(null) }
 
     val scope = rememberCoroutineScope()
 
@@ -94,22 +106,68 @@ fun AppPinScreen(
         }
     }
 
+    fun startReset() {
+        forgotError = null
+        forgotStatus = "Connecting to Cove..."
+        scope.launch {
+            try {
+                val serverUrl = serverStore.serverUrl.firstOrNullSync()
+                val token = serverStore.accessToken.firstOrNullSync()
+                if (serverUrl.isNullOrBlank() || token.isNullOrBlank()) {
+                    forgotError = "Not connected to Cove. Please log in first."
+                    return@launch
+                }
+                val api = session.createApi(serverUrl, token)
+                // Generate a 6-digit code locally
+                val code = (100000 + java.util.Random().nextInt(900000)).toString()
+                forgotCode = code
+                val reg = api.loungeRegisterReset(mapOf("ResetCode" to code))
+                if (!reg.ok) {
+                    forgotError = reg.error ?: "Failed to register reset code."
+                    return@launch
+                }
+                forgotStatus = "Enter code $code in Cove (along with your Cove password) to verify your identity."
+                isPolling = true
+                // Poll for approval
+                scope.launch {
+                    while (isPolling) {
+                        delay(3000)
+                        if (!isPolling) break
+                        try {
+                            val st = api.loungeResetStatus()
+                            if (st.approved) {
+                                isPolling = false
+                                store.removeAppPin()
+                                onUnlocked()
+                                break
+                            }
+                        } catch (_: Exception) {
+                        }
+                    }
+                }
+            } catch (e: HttpException) {
+                val body = e.response()?.errorBody()?.string()
+                forgotError = "HTTP ${e.code()}: ${body ?: e.message()}"
+            } catch (e: Exception) {
+                forgotError = e.message ?: "Failed to start reset."
+            }
+        }
+    }
+
     Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(24.dp)
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            modifier = Modifier.verticalScroll(rememberScrollState())
         ) {
-            // Logo
-            Text("CoveLounge", color = Color.White, fontWeight = FontWeight.Bold)
+            Image(painter = painterResource(id = R.drawable.logo), contentDescription = "CoveLounge", modifier = Modifier.size(96.dp))
 
             if (!showForgot) {
-                // PIN entry
                 Text("Enter PIN", color = Color.White)
 
-                // PIN dots
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
                     modifier = Modifier.graphicsLayer { translationX = if (showError) shakeOffset * 20f else 0f }
@@ -130,7 +188,6 @@ fun AppPinScreen(
                     Text("Incorrect PIN", color = Color.Red)
                 }
 
-                // Number pad
                 NumberPad(
                     onDigit = { digit ->
                         if (enteredPin.length < 4) {
@@ -144,46 +201,50 @@ fun AppPinScreen(
                     }
                 )
 
-                // Forgot PIN button
                 TextButton(onClick = {
                     showForgot = true
-                    // Generate a random 6-digit code
-                    val code = (100000 + Random().nextInt(900000)).toString()
-                    forgotCode = code
-                    forgotStatus = "Enter code $code in Cove to verify your identity"
-                    isPolling = true
+                    forgotCode = null
+                    forgotError = null
+                    forgotStatus = ""
+                    isPolling = false
                 }) {
                     Text("Forgot PIN", color = Color(0xFF2196F3))
                 }
             } else {
-                // Forgot PIN flow
                 Text("Forgot PIN", color = Color.White, fontWeight = FontWeight.Bold)
-                Text(forgotStatus, color = Color.White)
 
-                if (forgotCode != null) {
-                    Text("Verification code: $forgotCode", color = Color(0xFFFFC107), fontWeight = FontWeight.Bold)
-                }
-
-                Text("Go to Cove and enter this code to verify your identity.", color = Color.Gray)
-
-                // In production: poll server endpoint to check verification
-                // For now: manual confirmation button
-                Button(onClick = {
-                    scope.launch {
-                        // In production: poll server endpoint
-                        // For now, simulate success after user confirms
-                        store.removeAppPin()
-                        isPolling = false
-                        onUnlocked()
+                if (forgotCode == null && !isPolling) {
+                    Text("Start a PIN reset. A code will be generated for you to enter in Cove.", color = Color.Gray)
+                    if (forgotError != null) {
+                        Text(forgotError!!, color = Color.Red)
                     }
-                }) {
-                    Text("I've verified in Cove")
+                    Button(onClick = { startReset() }) {
+                        Text("Start reset")
+                    }
+                } else {
+                    if (forgotCode != null) {
+                        Text("Verification code:", color = Color.White)
+                        Text(forgotCode!!, color = Color(0xFFFFC107), fontWeight = FontWeight.Bold)
+                    }
+                    Text(forgotStatus, color = Color.White)
+                    Text("Go to Cove and enter this code (plus your Cove password) to verify.", color = Color.Gray)
+                    if (isPolling) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            CircularProgressIndicator(color = Color(0xFF2196F3), modifier = Modifier.size(20.dp))
+                            Text("Waiting for verification...", color = Color.Gray)
+                        }
+                    }
+                    if (forgotError != null) {
+                        Text(forgotError!!, color = Color.Red)
+                    }
                 }
 
                 TextButton(onClick = {
                     showForgot = false
                     isPolling = false
                     forgotCode = null
+                    forgotAppId = null
+                    forgotError = null
                     enteredPin = ""
                 }) {
                     Text("Back to PIN entry", color = Color(0xFF2196F3))
@@ -191,4 +252,9 @@ fun AppPinScreen(
             }
         }
     }
+}
+
+// Extension to allow firstOrNull on Flow without collecting scope
+private fun <T> kotlinx.coroutines.flow.Flow<T>.firstOrNullSync(): T? {
+    return try { kotlinx.coroutines.runBlocking { this@firstOrNullSync.first() } } catch (_: Exception) { null }
 }
