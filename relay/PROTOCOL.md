@@ -1,6 +1,6 @@
-# ChannelFlow Quick Pin protocol
+# CoveLounge Quick Pin protocol
 
-This is the contract for [ChannelFlow-Server](https://github.com/binarygeek119/ChannelFlow)’s **Quick Pin** tab and the ChannelFlow app. The pin server only routes ciphertext. It never encrypts, decrypts, or logs URLs.
+This is the contract for Cove’s **Quick Pin** tab and the CoveLounge app. The pin server only routes ciphertext. It never encrypts, decrypts, or logs URLs.
 
 Public origin after GCP setup: `https://channelflow.duckdns.org` (or the DuckDNS name you chose).
 
@@ -16,7 +16,7 @@ Public origin after GCP setup: `https://channelflow.duckdns.org` (or the DuckDNS
 
 ## Encryption (PIN is the seed)
 
-Both the ChannelFlow app and ChannelFlow-Server derive the same key locally. They never send the key or the plaintext URLs to the pin server.
+Both the CoveLounge app and Cove derive the same key locally. They never send the key or the plaintext URLs to the pin server.
 
 ```
 key = SHA256( ASCII("ChannelFlow QuickPin v1") || ASCII(normalized PIN) )
@@ -30,29 +30,27 @@ key = SHA256( ASCII("ChannelFlow QuickPin v1") || ASCII(normalized PIN) )
 
 ```json
 {
-  "m3u": "http://192.168.1.10:8096/iptv/channels.m3u?api_key=…",
-  "xmltv": "http://192.168.1.10:8096/iptv/epg.xml?api_key=…",
-  "m3uPublic": "https://channelflow.example/iptv/channels.m3u?api_key=…",
-  "xmltvPublic": "https://channelflow.example/iptv/epg.xml?api_key=…",
-  "m3uLocal": "http://192.168.1.10:8096/iptv/channels.m3u?api_key=…",
-  "xmltvLocal": "http://192.168.1.10:8096/iptv/epg.xml?api_key=…"
+  "serverUrl": "https://cove.example",
+  "apiToken": "cove_pat_...",
+  "serverUrlPublic": "https://cove.example",
+  "serverUrlInternal": "http://192.168.1.10:8096"
 }
 ```
 
 Field meaning:
 
-- `m3u` / `xmltv` — **primary** pair the app should try first
-- `m3uPublic` / `xmltvPublic` — internet-reachable Live TV URLs
-- `m3uLocal` / `xmltvLocal` — same-LAN Live TV URLs
+- `serverUrl` — **primary** Cove URL the app should use
+- `serverUrlPublic` — internet-reachable Cove URL
+- `serverUrlInternal` — same-LAN Cove URL
 
-ChannelFlow-Server always sends all six keys. It sets the primary pair to **local** when the admin is pairing from a host other than the configured public URL (same network); otherwise primary is the **public** pair. The variants are included either way so the app can fall back.
+Cove always sends all four keys. It sets the primary URL to the **internal** one when the admin is pairing from a host on the same network; otherwise primary is the **public** URL. The variants are included either way so the app can fall back.
 
 Apps should:
 
-1. Connect with `m3u` / `xmltv` first
+1. Connect with `serverUrl` first
 2. Ignore unknown JSON keys
-3. Treat missing variant keys as empty (old servers send only `m3u` and `xmltv`)
-4. If the primary pair fails and both variants are present, try the other pair
+3. Treat missing variant keys as empty (old servers send only `serverUrl` and `apiToken`)
+4. If the primary URL fails and both variants are present, try the other
 
 A wrong PIN fails the auth tag. C# can use `SHA256.HashData` and `AesGcm`.
 
@@ -62,9 +60,9 @@ The HTTP envelope is unchanged: deliver is still `{"ciphertext":"<base64>"}`, an
 
 | Side | Behavior |
 | --- | --- |
-| New server, old app | Extra keys are ignored; the app uses primary `m3u` / `xmltv` |
+| New server, old app | Extra keys are ignored; the app uses primary `serverUrl` / `apiToken` |
 | Old server, new app | Only two keys; the app must not require variants |
-| New server, new app | All six keys; primary plus public/local fallback |
+| New server, new app | All four keys; primary plus public/internal fallback |
 
 ### C# sketch (server Quick Pin tab)
 
@@ -75,16 +73,14 @@ static byte[] Key(string pin)
     return SHA256.HashData(Encoding.ASCII.GetBytes("ChannelFlow QuickPin v1" + pin));
 }
 
-static string Encrypt(string pin, string m3u, string xmltv, string m3uPublic, string xmltvPublic, string m3uLocal, string xmltvLocal)
+static string Encrypt(string pin, string serverUrl, string apiToken, string serverUrlPublic, string serverUrlInternal)
 {
     var plain = JsonSerializer.SerializeToUtf8Bytes(new Dictionary<string, string>
     {
-        ["m3u"] = m3u,
-        ["xmltv"] = xmltv,
-        ["m3uPublic"] = m3uPublic,
-        ["xmltvPublic"] = xmltvPublic,
-        ["m3uLocal"] = m3uLocal,
-        ["xmltvLocal"] = xmltvLocal,
+        ["serverUrl"] = serverUrl,
+        ["apiToken"] = apiToken,
+        ["serverUrlPublic"] = serverUrlPublic,
+        ["serverUrlInternal"] = serverUrlInternal,
     });
     var nonce = RandomNumberGenerator.GetBytes(12);
     var ct = new byte[plain.Length];
@@ -137,10 +133,10 @@ HTTP fallback:
    - `{"type":"retry"}` (still waiting; call GET again)
    - `404` unknown PIN
 
-## ChannelFlow-Server: Quick Pin tab
+## Cove: Quick Pin tab
 
 1. User types the PIN shown on the app
-2. Server encrypts its public and local M3U/XMLTV URLs with that PIN (no key fetch). Primary is local when pairing on the LAN, public otherwise.
+2. Server encrypts its public and internal Cove URLs with that PIN (no key fetch). Primary is internal when pairing on the LAN, public otherwise.
 3. Deliver:
 
 ```
