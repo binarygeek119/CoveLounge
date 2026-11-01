@@ -9,3 +9,12 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+
+  - package-ecosystem: "gomod"
+    directory: "/relay"
+    schedule:
+      interval: "weekly"
+  - package-ecosystem: "npm"
+    directory: "/relay"
+    schedule:
+      interval: "weekly"
