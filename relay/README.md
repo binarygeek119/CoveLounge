@@ -4,7 +4,7 @@ Repo: [github.com/binarygeek119/CoveLounge/tree/main/relay](https://github.com/b
 
 Small always-on pin server for a Google Cloud VM. CoveLounge apps connect and receive a random **8-character quick PIN**. The user types that PIN on Cove’s **Quick Pin** tab. The server encrypts its public and local M3U/XMLTV URLs with the PIN as the seed; this process forwards the ciphertext to the waiting app and never opens it.
 
-[Cove](https://github.com/yourcove/cove) stays on your home machine. Live TV does not go through this VM.
+[Cove](https://github.com/yourcove/cove) stays on your home machine. Cove media does not go through this VM.
 
 Protocol for the C# Quick Pin tab and the WIP client: [PROTOCOL.md](PROTOCOL.md).
 
