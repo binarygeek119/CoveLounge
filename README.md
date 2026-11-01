@@ -39,3 +39,6 @@ The APK will be at `app/build/outputs/apk/debug/app-debug.apk`.
 MIT
 EOF
 git add README.md && git commit -m "Add README" 2>&1 | tail -5
+
+
+> **Disclaimer:** This project is 100% AI-coded. It is tested and written to be as safe as possible, but has not been reviewed by a human code reviewer. Use at your own risk.
