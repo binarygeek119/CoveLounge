@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CoveLounge Pin Server</title>
+  <link rel="icon" href="/favicon.ico" sizes="48x48" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <link rel="manifest" href="/site.webmanifest" />
+  <meta name="theme-color" content="#0e0e12" />
+  <meta property="og:title" content="CoveLounge Pin Server" />
+  <meta property="og:image" content="/logo.png" />
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <header class="top">
+    <div class="brand">
+      <img class="logo" src="/logo.png" alt="CoveLounge Pin Server" width="471" height="284" />
+    </div>
+    <p class="lede">Apps wait here for a quick PIN. Type that PIN in Cove to send an encrypted server URL and API token. This page stands in for both sides during development.</p>
+  </header>
+
+  <main class="grid">
+    <section class="card" id="app-pane">
+      <h1>App</h1>
+      <p class="hint">Connects like the CoveLounge client. Shows the PIN the user must type on the server.</p>
+      <div class="pin-board" id="app-pin" aria-live="polite">
+        <span class="muted">Not connected</span>
+      </div>
+      <p class="meta" id="app-meta">Idle</p>
+      <div class="actions">
+        <button type="button" id="app-connect">Get a quick PIN</button>
+        <button type="button" class="ghost" id="app-drop" disabled>Disconnect</button>
+      </div>
+      <div class="result" id="app-result" hidden></div>
+    </section>
+
+    <section class="card" id="server-pane">
+      <h1>Quick Pin</h1>
+      <p class="hint">Same job as the Cove tab: encrypt the public and local URL sets with the PIN and deliver them. Primary is the local pair when it differs from public (same-network pairing), otherwise the public pair.</p>
+      <label>Quick PIN
+        <input id="srv-pin" inputmode="text" autocomplete="off" spellcheck="false" maxlength="9" placeholder="XXXX-XXXX" />
+      </label>
+      <fieldset class="url-group">
+        <legend>Public (internet)</legend>
+        <label>M3U URL
+          <input id="srv-m3u-public" type="url" placeholder="https://your-public-host/iptv/channels.m3u" />
+        </label>
+        <label>XMLTV URL
+          <input id="srv-xmltv-public" type="url" placeholder="https://your-public-host/iptv/epg.xml" />
+        </label>
+      </fieldset>
+      <fieldset class="url-group">
+        <legend>Local (same network)</legend>
+        <label>M3U URL
+          <input id="srv-m3u-local" type="url" placeholder="http://192.168.1.10:8096/iptv/channels.m3u" />
+        </label>
+        <label>XMLTV URL
+          <input id="srv-xmltv-local" type="url" placeholder="http://192.168.1.10:8096/iptv/epg.xml" />
+        </label>
+      </fieldset>
+      <div class="actions">
+        <button type="button" id="srv-send">Encrypt and send</button>
+      </div>
+      <p class="meta" id="srv-meta"></p>
+    </section>
+  </main>
+
+  <footer>
+    <span id="waiting">Waiting apps: —</span>
+    <span>Pins last 10 minutes. The pin server never sees the URLs.</span>
+  </footer>
+  <script src="/app.js"></script>
+</body>
+</html>
