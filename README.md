@@ -42,3 +42,5 @@ git add README.md && git commit -m "Add README" 2>&1 | tail -5
 
 
 > **Disclaimer:** This project is 100% AI-coded. It is tested and written to be as safe as possible, but has not been reviewed by a human code reviewer. Use at your own risk.
+
+> **Quick Pin relay note:** The CoveLounge QuickPin plugin uses a public relay (`covelounge.duckdns.org`) to pair the app with your Cove server. The relay only routes encrypted pairing payloads and never stores media or credentials. Do not use on untrusted networks if you require full privacy.
