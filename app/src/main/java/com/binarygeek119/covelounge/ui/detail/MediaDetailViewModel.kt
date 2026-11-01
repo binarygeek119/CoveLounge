@@ -33,6 +33,9 @@ class MediaDetailViewModel(app: Application, val kind: MediaKind, val id: Int) :
     private val _isFavorite = MutableStateFlow(false)
     val isFavorite: StateFlow<Boolean> = _isFavorite
 
+    private val _resumeTime = MutableStateFlow(0.0)
+    val resumeTime: StateFlow<Double> = _resumeTime
+
     private var api: com.binarygeek119.covelounge.data.network.CoveApi? = null
     private var baseUrl: String = ""
     private var token: String = ""
@@ -69,11 +72,15 @@ class MediaDetailViewModel(app: Application, val kind: MediaKind, val id: Int) :
         }
     }
 
-    private fun fetchFavorite() {
+    private fun fetchEngagement() {
         val a = api ?: return
         viewModelScope.launch {
             try {
-                _isFavorite.value = a.getEngagement(hostType(), id).isFavorite
+                val eng = a.getEngagement(hostType(), id)
+                _isFavorite.value = eng.isFavorite
+                _resumeTime.value = eng.resumeTime
+                _rating.value = eng.rating ?: _rating.value
+                if (eng.likeCount > 0) _likeCount.value = eng.likeCount
             } catch (_: Exception) {}
         }
     }
@@ -99,7 +106,7 @@ class MediaDetailViewModel(app: Application, val kind: MediaKind, val id: Int) :
         token = authToken
         api = session.createApi(serverUrl, authToken)
         load()
-        fetchFavorite()
+        fetchEngagement()
     }
 
     private fun load() {
@@ -117,6 +124,7 @@ class MediaDetailViewModel(app: Application, val kind: MediaKind, val id: Int) :
                         } ?: "$baseUrl/api/stream/video/$id/screenshot?access_token=$token"
                         _performers.value = dto.performers ?: emptyList()
                         _rating.value = dto.rating
+                        // resumeTime fetched via fetchEngagement()
                     }
                     MediaKind.AUDIO -> {
                         val dto = a.audioDetail(id)

@@ -196,7 +196,8 @@ data class EntityEngagementDto(
     val isFavorite: Boolean = false,
     val rating: Int? = null,
     val playCount: Int = 0,
-    val likeCount: Int = 0
+    val likeCount: Int = 0,
+    val resumeTime: Double = 0.0
 )
 
 @Serializable

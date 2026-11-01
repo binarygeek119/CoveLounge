@@ -55,7 +55,7 @@ fun MediaDetailScreen(
     baseUrl: String,
     token: String,
     onBack: () -> Unit,
-    onPlay: () -> Unit,
+    onPlay: (startPositionMs: Long) -> Unit,
     onPreview: () -> Unit = {}
 ) {
     val title by viewModel.title.collectAsState()
@@ -65,8 +65,11 @@ fun MediaDetailScreen(
     val isFavorite by viewModel.isFavorite.collectAsState()
     val rating by viewModel.rating.collectAsState()
     val performers by viewModel.performers.collectAsState()
+    val resumeTime by viewModel.resumeTime.collectAsState()
     val playFr = remember { FocusRequester() }
     var playFocused by remember { mutableStateOf(false) }
+    val circlePlayFr = remember { FocusRequester() }
+    var circlePlayFocused by remember { mutableStateOf(false) }
     val previewFr = remember { FocusRequester() }
     var previewFocused by remember { mutableStateOf(false) }
     val likeFr = remember { FocusRequester() }
@@ -93,6 +96,33 @@ fun MediaDetailScreen(
             Column(modifier = Modifier.weight(1f).padding(start = 16.dp)) {
                 // Button row
                 Row(verticalAlignment = Alignment.CenterVertically) {
+                    // Continue watching (circle-play) - only if partly viewed
+                    if (resumeTime > 0) {
+                        Box(
+                            modifier = Modifier
+                                .focusRequester(circlePlayFr)
+                                .onFocusChanged { circlePlayFocused = it.isFocused }
+                                .onPreviewKeyEvent { event ->
+                                    if (event.nativeKeyEvent.action == KeyEvent.ACTION_DOWN) {
+                                        when (event.nativeKeyEvent.keyCode) {
+                                            KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER -> { viewModel.recordPlay(); onPlay((resumeTime * 1000).toLong()); true }
+                                            else -> false
+                                        }
+                                    } else false
+                                }
+                                .background(if (circlePlayFocused) Color(0xFF2196F3) else Color(0x33FFFFFF), CircleShape)
+                                .clickable { viewModel.recordPlay(); onPlay((resumeTime * 1000).toLong()) }
+                                .padding(12.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_fa_circle_play),
+                                contentDescription = "Continue watching",
+                                tint = Color.White,
+                                modifier = Modifier.size(48.dp)
+                            )
+                        }
+                    }
                     // Play
                     Box(
                         modifier = Modifier
@@ -101,13 +131,13 @@ fun MediaDetailScreen(
                             .onPreviewKeyEvent { event ->
                                 if (event.nativeKeyEvent.action == KeyEvent.ACTION_DOWN) {
                                     when (event.nativeKeyEvent.keyCode) {
-                                        KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER -> { viewModel.recordPlay(); onPlay(); true }
+                                        KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER -> { viewModel.recordPlay(); onPlay(0L); true }
                                         else -> false
                                     }
                                 } else false
                             }
                             .background(if (playFocused) Color(0xFF2196F3) else Color(0x33FFFFFF), CircleShape)
-                            .clickable { viewModel.recordPlay(); onPlay() }
+                            .clickable { viewModel.recordPlay(); onPlay(0L) }
                             .padding(12.dp),
                         contentAlignment = Alignment.Center
                     ) {

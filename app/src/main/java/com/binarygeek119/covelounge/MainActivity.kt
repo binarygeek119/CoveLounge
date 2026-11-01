@@ -80,6 +80,7 @@ class MainActivity : ComponentActivity() {
                 val appPin by settingsStore.appPin.collectAsState(initial = null)
                 var pinVerified by remember { mutableStateOf(false) }
                 var selectedVideo by remember { mutableStateOf<Int?>(null) }
+                var selectedStartPosition by remember { mutableStateOf(0L) }
                 var selectedAudio by remember { mutableStateOf<Int?>(null) }
                 var selectedImage by remember { mutableStateOf<Int?>(null) }
                 var selectedPreview by remember { mutableStateOf<Int?>(null) }
@@ -131,8 +132,9 @@ class MainActivity : ComponentActivity() {
                         val id = detailId!!
                         val vm = MediaDetailViewModel(application, kind, id)
                         vm.init(url, token)
-                        MediaDetailScreen(vm, url ?: "", token ?: "", onBack = { detailKind = null; detailId = null }, onPlay = {
+                        MediaDetailScreen(vm, url ?: "", token ?: "", onBack = { detailKind = null; detailId = null }, onPlay = { startPosition ->
                             SoundManager.playClick()
+                            selectedStartPosition = startPosition
                             when (kind) {
                                 MediaKind.VIDEO -> selectedVideo = id
                                 MediaKind.AUDIO -> selectedAudio = id
@@ -148,9 +150,9 @@ class MainActivity : ComponentActivity() {
                             detailId = null
                         })
                     }
-                    selectedPreview != null -> PlayerScreen(url!!, token ?: "", "preview", selectedPreview!!) { SoundManager.playBack(); selectedPreview = null }
-                    selectedVideo != null -> PlayerScreen(url!!, token ?: "", "video", selectedVideo!!) { SoundManager.playBack(); selectedVideo = null }
-                    selectedAudio != null -> PlayerScreen(url!!, token ?: "", "audio", selectedAudio!!) { SoundManager.playBack(); selectedAudio = null }
+                    selectedPreview != null -> PlayerScreen(url!!, token ?: "", "preview", selectedPreview!!, 0L) { SoundManager.playBack(); selectedPreview = null }
+                    selectedVideo != null -> PlayerScreen(url!!, token ?: "", "video", selectedVideo!!, selectedStartPosition) { SoundManager.playBack(); selectedVideo = null; selectedStartPosition = 0L }
+                    selectedAudio != null -> PlayerScreen(url!!, token ?: "", "audio", selectedAudio!!, 0L) { SoundManager.playBack(); selectedAudio = null }
                     selectedImage != null -> ImageScreen(url!!, token ?: "", selectedImage!!) { SoundManager.playBack(); selectedImage = null }
                     selectedFolder != null -> {
                         val kind = selectedFolder!!

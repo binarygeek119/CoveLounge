@@ -75,7 +75,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @Composable
-fun PlayerScreen(baseUrl: String, token: String, type: String, id: Int, onBack: () -> Unit) {
+fun PlayerScreen(baseUrl: String, token: String, type: String, id: Int, startPosition: Long = 0L, onBack: () -> Unit) {
     val context = LocalContext.current
     val app = context.applicationContext as Application
     val api = remember(baseUrl, token) { SessionRepository(com.binarygeek119.covelounge.data.ServerStore(app)).createApi(baseUrl, token) }
@@ -200,6 +200,7 @@ fun PlayerScreen(baseUrl: String, token: String, type: String, id: Int, onBack: 
         Log.d("SeekFix", "Re-preparing player: url=$url, startSeconds=$startSeconds")
         player.setMediaItem(MediaItem.fromUri(Uri.parse(url)))
         player.prepare()
+        if (startPosition > 0) player.seekTo(startPosition)
         player.playWhenReady = true
         // Reset savedPosition when using start-based seek
         if (startSeconds > 0) savedPosition = 0L
