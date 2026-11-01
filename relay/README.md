@@ -1,6 +1,6 @@
 # CoveLounge pin server
 
-Repo: [github.com/binarygeek119/covelounge-pin-server](https://github.com/binarygeek119/covelounge-pin-server)
+Repo: [github.com/binarygeek119/CoveLounge/tree/main/relay](https://github.com/binarygeek119/CoveLounge/tree/main/relay)
 
 Small always-on pin server for a Google Cloud VM. CoveLounge apps connect and receive a random **8-character quick PIN**. The user types that PIN on Cove’s **Quick Pin** tab. The server encrypts its public and local M3U/XMLTV URLs with the PIN as the seed; this process forwards the ciphertext to the waiting app and never opens it.
 
