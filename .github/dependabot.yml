@@ -14,7 +14,11 @@ updates:
     directory: "/relay"
     schedule:
       interval: "weekly"
+    labels:
+      - "relay"
   - package-ecosystem: "npm"
     directory: "/relay"
     schedule:
       interval: "weekly"
+    labels:
+      - "relay"
