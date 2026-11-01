@@ -49,7 +49,7 @@ export DUCKDNS_TOKEN=your-token-from-duckdns.org
 ./pinserver
 ```
 
-The process updates `covelounge.duckdns.org` every 5 minutes and gets a Let’s Encrypt certificate for that name.
+The process updates your DuckDNS subdomain every 5 minutes and gets a Let’s Encrypt certificate for that name.
 
 ## Google Cloud
 
@@ -66,9 +66,7 @@ chmod +x scripts/gcp-setup.sh
 ./scripts/gcp-setup.sh
 ```
 
-The script creates a GCP project, an e2-micro VM, firewall rules for 80/443, stores the DuckDNS token on the VM, points `covelounge.duckdns.org` at the VM, and starts the pin server from `ghcr.io/binarygeek119/covelounge-pin-server:latest`. Cove and the app should use:
-
-`https://covelounge.duckdns.org`
+The script creates a GCP project, an e2-micro VM, firewall rules for 80/443, stores the DuckDNS token on the VM, points your DuckDNS subdomain at the VM, and starts the pin server. Cove and the app should use your configured origin.
 
 To refresh the VM after a new GitHub build:
 
