@@ -1,7 +1,6 @@
 package com.binarygeek119.covelounge.ui.media
 
 import android.net.Uri
-import android.util.Log
 import android.graphics.Bitmap
 import android.graphics.drawable.BitmapDrawable
 import android.view.KeyEvent
@@ -121,6 +120,7 @@ fun PlayerScreen(baseUrl: String, token: String, type: String, id: Int, startPos
     var position by remember { mutableStateOf(0L) }
     var duration by remember { mutableStateOf(0L) }
     var spriteBitmap by remember { mutableStateOf<Bitmap?>(null) }
+    var initialSeekDone by remember { mutableStateOf(false) }
     var isScrubbing by remember { mutableStateOf(false) }
     var previewBitmap by remember { mutableStateOf<Bitmap?>(null) }
     var sliderWidth by remember { mutableStateOf(0) }
@@ -197,10 +197,12 @@ fun PlayerScreen(baseUrl: String, token: String, type: String, id: Int, startPos
         }
     }
     LaunchedEffect(url) {
-        Log.d("SeekFix", "Re-preparing player: url=$url, startSeconds=$startSeconds")
         player.setMediaItem(MediaItem.fromUri(Uri.parse(url)))
         player.prepare()
-        if (startPosition > 0) player.seekTo(startPosition)
+        if (startPosition > 0 && !initialSeekDone) {
+            player.seekTo(startPosition)
+            initialSeekDone = true
+        }
         player.playWhenReady = true
         // Reset savedPosition when using start-based seek
         if (startSeconds > 0) savedPosition = 0L
@@ -240,7 +242,6 @@ fun PlayerScreen(baseUrl: String, token: String, type: String, id: Int, startPos
                     KeyEvent.KEYCODE_DPAD_LEFT -> {
                         if (playbackFocused || sliderFocused) {
                             val newPos = (position - 15000).coerceAtLeast(0L)
-                            Log.d("SeekFix", "LEFT seek to $newPos ms")
                             startSeconds = newPos / 1000.0
                             true
                         } else false
@@ -248,7 +249,6 @@ fun PlayerScreen(baseUrl: String, token: String, type: String, id: Int, startPos
                     KeyEvent.KEYCODE_DPAD_RIGHT -> {
                         if (playbackFocused || sliderFocused) {
                             val newPos = (position + 15000).coerceAtMost(duration)
-                            Log.d("SeekFix", "RIGHT seek to $newPos ms")
                             startSeconds = newPos / 1000.0
                             true
                         } else false
@@ -394,7 +394,6 @@ fun PlayerScreen(baseUrl: String, token: String, type: String, id: Int, startPos
                         previewBitmap = null
                         if (duration > 0) {
                             val targetSeconds = position / 1000.0
-                            Log.d("SeekFix", "Slider seek to $position ms ($targetSeconds s)")
                             startSeconds = targetSeconds
                         }
                     },
