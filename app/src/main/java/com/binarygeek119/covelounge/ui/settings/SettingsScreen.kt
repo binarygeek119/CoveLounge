@@ -32,6 +32,8 @@ import com.binarygeek119.covelounge.data.ServerStore
 import com.binarygeek119.covelounge.data.SessionRepository
 import com.binarygeek119.covelounge.BuildConfig
 import com.binarygeek119.covelounge.data.SettingsStore
+import com.binarygeek119.covelounge.ui.pin.AppPinScreen
+import com.binarygeek119.covelounge.ui.pin.NumberPad
 import com.binarygeek119.covelounge.util.ImageCache
 import com.binarygeek119.covelounge.util.UpdateChecker
 import kotlinx.coroutines.launch
@@ -54,6 +56,7 @@ fun SettingsScreen(onBack: () -> Unit, onLogout: () -> Unit = {}) {
     val screenshotInterval by store.screenshotInterval.collectAsState(initial = 10)
     val useTranscode by store.useTranscode.collectAsState(initial = false)
     val transcodeResolution by store.transcodeResolution.collectAsState(initial = "720p")
+    val appPin by store.appPin.collectAsState(initial = null)
     val ratingsOnExit by store.ratingsOnExit.collectAsState(initial = false)
     var selectedMode by remember { mutableStateOf(previewMode) }
     var selectedCount by remember { mutableStateOf(screenshotCount) }
@@ -149,6 +152,59 @@ fun SettingsScreen(onBack: () -> Unit, onLogout: () -> Unit = {}) {
                     category = "main"
                 }) { Text("Save") }
                 Button(onClick = { category = "main" }) { Text("Cancel") }
+            }
+            "apppin" -> {
+                Text("App PIN")
+                if (appPin != null) {
+                    Text("PIN is currently set", color = Color.Green)
+                    Text("Remove PIN", color = Color.White, modifier = Modifier.clickable {
+                        scope.launch { store.removeAppPin() }
+                    })
+                } else {
+                    Text("No PIN set", color = Color.Gray)
+                    var newPin by remember { mutableStateOf("") }
+                    var confirmPin by remember { mutableStateOf("") }
+                    var step by remember { mutableStateOf(0) } // 0=enter, 1=confirm
+                    var error by remember { mutableStateOf<String?>(null) }
+
+                    if (step == 0) {
+                        Text("Enter new 4-digit PIN")
+                        NumberPad(
+                            onDigit = { d -> if (newPin.length < 4) newPin += d.toString() },
+                            onBackspace = { if (newPin.isNotEmpty()) newPin = newPin.dropLast(1) }
+                        )
+                        Text("Entered: ${"*".repeat(newPin.length)}", color = Color.White)
+                        if (newPin.length == 4) {
+                            Button(onClick = { step = 1; error = null }) { Text("Next") }
+                        }
+                    } else {
+                        Text("Confirm PIN")
+                        NumberPad(
+                            onDigit = { d -> if (confirmPin.length < 4) confirmPin += d.toString() },
+                            onBackspace = { if (confirmPin.isNotEmpty()) confirmPin = confirmPin.dropLast(1) }
+                        )
+                        Text("Entered: ${"*".repeat(confirmPin.length)}", color = Color.White)
+                        error?.let { Text(it, color = Color.Red) }
+                        if (confirmPin.length == 4) {
+                            Button(onClick = {
+                                if (newPin == confirmPin) {
+                                    scope.launch {
+                                        store.setAppPin(newPin)
+                                        newPin = ""
+                                        confirmPin = ""
+                                        step = 0
+                                        error = null
+                                    }
+                                } else {
+                                    error = "PINs do not match"
+                                    confirmPin = ""
+                                }
+                            }) { Text("Save PIN") }
+                        }
+                        Button(onClick = { step = 0; confirmPin = ""; error = null }) { Text("Back") }
+                    }
+                }
+                Button(onClick = { category = "main" }) { Text("Back") }
             }
             "about" -> {
                 Text("About")

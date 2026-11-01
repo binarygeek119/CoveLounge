@@ -47,6 +47,8 @@ import com.binarygeek119.covelounge.ui.login.LoginViewModel
 import com.binarygeek119.covelounge.ui.media.ImageScreen
 import com.binarygeek119.covelounge.ui.media.PlayerScreen
 import com.binarygeek119.covelounge.ui.settings.SettingsScreen
+import com.binarygeek119.covelounge.ui.pin.AppPinScreen
+import com.binarygeek119.covelounge.data.SettingsStore
 import com.binarygeek119.covelounge.ui.search.SearchScreen
 import com.binarygeek119.covelounge.ui.search.SearchViewModel
 import com.binarygeek119.covelounge.ui.theme.CoveLoungeTheme
@@ -55,6 +57,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val store = ServerStore(applicationContext)
+        val settingsStore = SettingsStore(applicationContext)
         val loginVm = LoginViewModel(application)
         val homeVm = HomeViewModel(application)
         val quickPinVm = QuickPinViewModel(application)
@@ -74,6 +77,8 @@ class MainActivity : ComponentActivity() {
                 val loggedIn by loginVm.success.collectAsState()
                 val quickSuccess by quickPinVm.success.collectAsState()
                 var useQuickPin by remember { mutableStateOf(false) }
+                val appPin by settingsStore.appPin.collectAsState(initial = null)
+                var pinVerified by remember { mutableStateOf(false) }
                 var selectedVideo by remember { mutableStateOf<Int?>(null) }
                 var selectedAudio by remember { mutableStateOf<Int?>(null) }
                 var selectedImage by remember { mutableStateOf<Int?>(null) }
@@ -111,6 +116,8 @@ class MainActivity : ComponentActivity() {
                     ) {
                         Image(painter = painterResource(id = R.drawable.logo), contentDescription = "CoveLounge", modifier = androidx.compose.ui.Modifier.fillMaxSize(0.6f).then(androidx.compose.ui.Modifier.scale(scale)), contentScale = ContentScale.Fit)
                     }
+                } else if (appPin != null && !pinVerified) {
+                    AppPinScreen(onUnlocked = { pinVerified = true })
                 } else when {
                     token == null && !loggedIn && !quickSuccess -> {
                         if (useQuickPin) {
